@@ -1,0 +1,6 @@
+# dot files
+.idea/
+*.user
+
+# build files
+cmake-build-debug/
