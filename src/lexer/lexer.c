@@ -62,10 +62,6 @@ const char *keywords[] = {
 };
 #define keywords_count sizeof(keywords)/sizeof(keywords[0])
 
-// TODO: clean up macros
-#define peek(l, offset) (l->content[l->cursor + offset])
-#define can_peek(l, offset) ((l->cursor + offset) < l->content_len)
-
 Lexer lexer_new(const char *content, uSize content_len) {
     Lexer l = {0};
     l.content = content;
@@ -81,11 +77,11 @@ CharPosition lexer_get_position(Lexer *l) {
 }
 
 void lexer_consume(Lexer *l, uSize len) {
-    char x = peek(l, 0);
+    char x = l->content[l->cursor];
     l->cursor += len;
 
     if (x == '\r') {
-        if (peek(l, 0) == '\n') {
+        if (l->content[l->cursor] == '\n') {
             l->cursor += 1;
         }
 
@@ -120,7 +116,7 @@ bool lexer_starts_with(Lexer *l, const char *prefix) {
 }
 
 void lexer_trim_left(Lexer *l) {
-    while (can_peek(l, 0) && isspace(peek(l, 0))) {
+    while (l->cursor < l->content_len && isspace(l->content[l->cursor])) {
         UNUSED(lexer_consume(l, 1));
     }
 }
@@ -136,21 +132,21 @@ bool is_symbol(char x) {
 Token lexer_next(Lexer *l) {
     lexer_trim_left(l);
     Token token = {0};
-    token.text = &peek(l, 0);
+    token.text = &l->content[l->cursor];
     CharPosition start_pos = lexer_get_position(l);
 
     if (l->cursor >= l->content_len) {
         return token;
     }
 
-    if (is_symbol_start(peek(l, 0))) {
+    if (is_symbol_start(l->content[l->cursor])) {
         token.type = TOKEN_SYMBOL;
 
-        while (can_peek(l, 0) && is_symbol(peek(l, 0))) {
+        while (l->cursor < l->content_len && is_symbol(l->content[l->cursor])) {
             lexer_consume(l, 1);
         }
 
-        token.text_len = &peek(l, 0) - token.text;
+        token.text_len = &l->content[l->cursor] - token.text;
 
         for (uSize i = 0; i < keywords_count; ++i) {
             uSize keyword_len = strlen(keywords[i]);
@@ -175,47 +171,43 @@ Token lexer_next(Lexer *l) {
                 lexer_consume(l, 1);
             }
         } else {
-            while (can_peek(l, 0) && peek(l, 0) != '\n' && peek(l, 0) != '\r') {
+            while (l->cursor < l->content_len && l->content[l->cursor] != '\n' && l->content[l->cursor] != '\r') {
                 lexer_consume(l, 1);
             }
         }
 
-        token.text_len = &peek(l, 0) - token.text;
+        token.text_len = &l->content[l->cursor] - token.text;
         token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
 
-    if (peek(l, 0) == '\"' || peek(l, 0) == '\'') {
-        const char quoteType = peek(l, 0);
+    if (l->content[l->cursor] == '\"' || l->content[l->cursor] == '\'') {
+        const char quoteType = l->content[l->cursor];
         lexer_consume(l, 1);
 
         // TODO: should also handle escape sequence like \n
-        while (can_peek(l, 0) && peek(l, 0) != quoteType) {
+        while (l->cursor < l->content_len && l->content[l->cursor] != quoteType) {
             lexer_consume(l, 1);
         }
-        if (can_peek(l, 0)) {
+        if (l->cursor < l->content_len) {
             lexer_consume(l, 1);
         }
 
         token.type = TOKEN_STRING;
-        token.text_len = &peek(l, 0) - token.text;
+        token.text_len = &l->content[l->cursor] - token.text;
         token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
-
     //TODO: handle multi line string "[==['str']==]" "[['str']]" 
-//    if (peek(0) == '[' && can_peek(1) && (peek(1) == '[' || peek(1) == '=')) {
-//        lexer_consume(l, 1);
-//    }
 
-    if (isdigit(peek(l, 0))) {
+    if (isdigit(l->content[l->cursor])) {
         token.type = TOKEN_NUMBER;
 
-        while (can_peek(l, 0) && isdigit(peek(l, 0))) {
+        while (l->cursor < l->content_len && isdigit(l->content[l->cursor])) {
             lexer_consume(l, 1);
         }
 
-        token.text_len = &peek(l, 0) - token.text;
+        token.text_len = &l->content[l->cursor] - token.text;
         token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
