@@ -117,7 +117,7 @@ bool lexer_starts_with(Lexer *l, const char *prefix) {
 
 void lexer_trim_left(Lexer *l) {
     while (l->cursor < l->content_len && isspace(l->content[l->cursor])) {
-        UNUSED(lexer_consume(l, 1));
+        lexer_consume(l, 1);
     }
 }
 
