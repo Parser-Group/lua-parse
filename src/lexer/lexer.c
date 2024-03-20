@@ -62,7 +62,7 @@ const char *keywords[] = {
 };
 #define keywords_count sizeof(keywords)/sizeof(keywords[0])
 
-Lexer lexer_new(const char *content, uSize content_len) {
+Lexer lexer_new(const char *content, size_t content_len) {
     Lexer l = {0};
     l.content = content;
     l.content_len = content_len;
@@ -76,7 +76,7 @@ CharPosition lexer_get_position(Lexer *l) {
     return pos;
 }
 
-void lexer_consume(Lexer *l, uSize len) {
+void lexer_consume(Lexer *l, size_t len) {
     char x = l->content[l->cursor];
     l->cursor += len;
 
@@ -97,7 +97,7 @@ void lexer_consume(Lexer *l, uSize len) {
 }
 
 bool lexer_starts_with(Lexer *l, const char *prefix) {
-    uSize prefix_len = strlen(prefix);
+    size_t prefix_len = strlen(prefix);
     if (prefix_len == 0) {
         return true;
     }
@@ -106,7 +106,7 @@ bool lexer_starts_with(Lexer *l, const char *prefix) {
         return false;
     }
 
-    for (uSize i = 0; i < prefix_len; ++i) {
+    for (size_t i = 0; i < prefix_len; ++i) {
         if (prefix[i] != l->content[l->cursor + i]) {
             return false;
         }
@@ -148,8 +148,8 @@ Token lexer_next(Lexer *l) {
 
         token.text_len = &l->content[l->cursor] - token.text;
 
-        for (uSize i = 0; i < keywords_count; ++i) {
-            uSize keyword_len = strlen(keywords[i]);
+        for (size_t i = 0; i < keywords_count; ++i) {
+            size_t keyword_len = strlen(keywords[i]);
             if (keyword_len == token.text_len && memcmp(keywords[i], token.text, keyword_len) == 0) {
                 token.type = TOKEN_KEYWORD;
                 break;
@@ -216,7 +216,7 @@ Token lexer_next(Lexer *l) {
     for (int i = 0; i < lit_tokens_count; ++i) {
         //NOTE: this code assumes there no newline in literal_tokens[i].text
         if (lexer_starts_with(l, literal_tokens[i].text)) {
-            uSize text_len = strlen(literal_tokens[i].text);
+            size_t text_len = strlen(literal_tokens[i].text);
             lexer_consume(l, text_len);
 
             token.type = literal_tokens[i].type;

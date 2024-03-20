@@ -4,13 +4,13 @@
 
 typedef struct {
     const char *content;
-    uSize content_len;
-    uSize cursor;
-    uSize line;
-    uSize begin_of_line;
+    size_t content_len;
+    size_t cursor;
+    size_t line;
+    size_t begin_of_line;
 } Lexer;
 
-Lexer  lexer_new(const char *content, uSize content_len);
+Lexer  lexer_new(const char *content, size_t content_len);
 Token  lexer_next(Lexer *l);
 
 #endif //LUATRANSPILER_LEXER_H

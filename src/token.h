@@ -1,7 +1,6 @@
 #ifndef LUATRANSPILER_TOKEN_H
 #define LUATRANSPILER_TOKEN_H
 
-#include "types.h"
 #include "utils.h"
 #include "Position.h"
 
@@ -61,7 +60,7 @@ typedef struct {
     Position position;
     TokenType type;
     const char *text;
-    uSize text_len;
+    size_t text_len;
 } Token;
 
 #endif //LUATRANSPILER_TOKEN_H

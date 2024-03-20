@@ -6,7 +6,7 @@
 
 int main() {
     char *content;
-    uSize content_len;
+    size_t content_len;
     { // load from file
         FILE *file = fopen(".\\..\\Test.lua", "rb");
         if (file == NULL) {

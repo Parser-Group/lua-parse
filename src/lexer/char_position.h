@@ -1,11 +1,10 @@
 #ifndef LUATRANSPILER_CHAR_POSITION_H
 #define LUATRANSPILER_CHAR_POSITION_H
-#include "types.h"
 #include "Position.h"
 
 typedef struct {
-    uSize line;
-    uSize column;
+    size_t line;
+    size_t column;
 } CharPosition;
 
 Position char_position_from_to(CharPosition start, CharPosition end) {
