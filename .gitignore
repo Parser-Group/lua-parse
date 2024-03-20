@@ -4,3 +4,7 @@
 
 # build files
 cmake-build-debug/
+
+# bin and build on non ide
+bin/
+build/
