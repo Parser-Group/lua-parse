@@ -5,6 +5,11 @@
 # build files
 cmake-build-debug/
 
-# bin and build on non ide
+# build files on non ide
 bin/
 build/
+CMakeFiles/
+Makefile
+CMakeCache.txt
+cmake_install.cmake
+LuaParser.exe
