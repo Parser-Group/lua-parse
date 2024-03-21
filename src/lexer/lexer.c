@@ -70,7 +70,8 @@ Lexer lexer_new(const char *content, size_t content_len) {
 
 CharPosition lexer_get_position(Lexer *l) {
     CharPosition pos;
-    pos.line = l->line;
+    // NOTE: adding one for offset since first char in file begins at line 1
+    pos.line = l->line + 1;
     pos.column = l->cursor - l->begin_of_line;
     return pos;
 }
@@ -201,6 +202,8 @@ Token lexer_next(Lexer *l) {
     Token token = {0};
     token.text = &l->content[l->cursor];
     CharPosition start_pos = lexer_get_position(l);
+    //NOTE: correcting column (not good design)
+    ++start_pos.column;
     
     if (!lexer_can_peek(l)) {
         return token;
@@ -251,7 +254,6 @@ Token lexer_next(Lexer *l) {
     
     if (lexer_peek_is(l, '\"') || lexer_peek_is(l, '\'')) {
         //TODO: handle escape sequences
-        
         const char quoteType = lexer_peek(l);
         lexer_consume(l, 1);
         
@@ -270,7 +272,6 @@ Token lexer_next(Lexer *l) {
     if (lexer_peek_is(l, '[')
         && (lexer_peek_is_with_offset(l, '[', 1)
             || lexer_peek_is_with_offset(l, '=', 1))) {
-        //TODO: handle multi line string "[===['str']===]" "[['str']]" 
         
         size_t count = 0;
         while (lexer_peek_is_with_offset(l, '=', count + 1)) {
