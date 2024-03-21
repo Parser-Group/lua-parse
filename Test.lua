@@ -208,3 +208,22 @@ local bitOr = 0 | 1
 local bitAnd = 1 & 1
 local bitShiftLeft = 1 << 1
 local bitShiftRight = 8 >> 1
+
+-- valid numbers
+local validNum1 = 3
+local validNum2 = 345
+local validNum3 = 0xff
+local validNum4 = 0xBEBADA
+
+-- valid floats
+local validFloat1 = 3.0
+local validFloat2 = 3.1416
+local validFloat3 = 314.16e-2
+local validFloat4 = 04.31416E1
+local validFloat5 = 34e1
+local validFloat6 = 0x0.1E
+local validFloat7 = 0xA23p-4
+local validFloat8 = 0X1.921FB54442D18P+1
+
+local multilineString = [===[test 
+multilineString]===]

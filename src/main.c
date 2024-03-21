@@ -45,7 +45,12 @@ int main() {
     t = lexer_next(&l);
 
     while (t.type != TOKEN_END) {
-        printf("'%.*s' (%s)\n", (int) t.text_len, t.text, token_type_name(t.type));
+        printf("'%.*s' (%s)<%zu:%zu-%zu:%zu>\n",
+               (int)t.text_len,
+               t.text,
+               token_type_name(t.type),
+               t.position.start_line, t.position.start_column,
+               t.position.end_line, t.position.end_column);
 
         t = lexer_next(&l);
     }

@@ -3,7 +3,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "utils.h"
 #include "char_position.h"
 
 typedef struct {
@@ -52,7 +51,7 @@ LiteralToken literal_tokens[] = {
         {.text = "%", .type = TOKEN_MODULO},
         {.text = "#", .type = TOKEN_LENGTH},
 };
-#define literal_tokens_count sizeof(literal_tokens)/sizeof(literal_tokens[0])
+#define get_literal_tokens_count sizeof(literal_tokens)/sizeof(literal_tokens[0])
 
 const char *keywords[] = {
         "and", "break", "do", "else", "elseif", "end",
@@ -60,7 +59,7 @@ const char *keywords[] = {
         "in", "local", "nil", "or", "repeat",
         "return", "then", "true", "until", "while"
 };
-#define keywords_count sizeof(keywords)/sizeof(keywords[0])
+#define get_keywords_count sizeof(keywords)/sizeof(keywords[0])
 
 Lexer lexer_new(const char *content, size_t content_len) {
     Lexer l = {0};
@@ -74,6 +73,35 @@ CharPosition lexer_get_position(Lexer *l) {
     pos.line = l->line;
     pos.column = l->cursor - l->begin_of_line;
     return pos;
+}
+
+#define lexer_peek(l) (l->content[l->cursor])
+#define lexer_peek_with_offset(l, offset) (l->content[l->cursor + offset])
+#define lexer_can_peek(l) (l->cursor < l->content_len)
+#define lexer_can_peek_with_offset(l, offset) (l->cursor + offset < l->content_len)
+
+bool lexer_peek_is(Lexer *l, char c) {
+    if (l->cursor >= l->content_len) {
+        return false;
+    }
+
+    if (l->content[l->cursor] != c) {
+        return false;
+    }
+
+    return true;
+}
+
+bool lexer_peek_is_with_offset(Lexer *l, char x, size_t offset) {
+    if (l->cursor + offset >= l->content_len) {
+        return false;
+    }
+
+    if (l->content[l->cursor + offset] != x) {
+        return false;
+    }
+
+    return true;
 }
 
 void lexer_consume(Lexer *l, size_t len) {
@@ -121,12 +149,51 @@ void lexer_trim_left(Lexer *l) {
     }
 }
 
-bool is_symbol_start(char x) {
-    return isalpha(x) || x == '_';
-}
+Token* multiline_string(Lexer *l, CharPosition *start_pos, Token *token, size_t count) {
+    lexer_consume(l, count + 2);
 
-bool is_symbol(char x) {
-    return isalnum(x) || x == '_';
+    if (lexer_peek_is(l, ']')) {
+        size_t found_count = 0;
+        for (size_t i = 0; i < count; ++i) {
+            if (!lexer_peek_is_with_offset(l, '=', 1 + i)) {
+                break;
+            }
+                
+            ++found_count;
+        }
+
+        if (found_count == count && lexer_peek_is_with_offset(l, ']', 1 + found_count)) {
+            lexer_consume(l, 2 + found_count);
+            return token;
+        }
+    }
+            
+    token->type = TOKEN_STRING;
+    token->text = &l->content[l->cursor];
+    
+    while (true) {
+        if (lexer_peek_is(l, ']')) {
+            size_t foundCount = 0;
+            for (size_t i = 0; i < count; ++i) {
+                if (!lexer_peek_is_with_offset(l, '=', 1 + i)) {
+                    break;
+                }
+
+                ++foundCount;
+            }
+
+            if (foundCount == count && lexer_peek_is_with_offset(l, ']', 1 + foundCount)) {
+                token->text_len = &lexer_peek(l) - token->text;
+                lexer_consume(l, 2 + foundCount);
+                break;
+            }
+        }
+
+        lexer_consume(l, 1);
+    }
+    
+    token->position = char_position_from_to(*start_pos, lexer_get_position(l));
+    return token;
 }
 
 Token lexer_next(Lexer *l) {
@@ -134,20 +201,21 @@ Token lexer_next(Lexer *l) {
     Token token = {0};
     token.text = &l->content[l->cursor];
     CharPosition start_pos = lexer_get_position(l);
-
-    if (l->cursor >= l->content_len) {
+    
+    if (!lexer_can_peek(l)) {
         return token;
     }
-
-    if (is_symbol_start(l->content[l->cursor])) {
+    
+    if (isalpha(lexer_peek(l)) || lexer_peek(l) == '_') {
         token.type = TOKEN_SYMBOL;
-
-        while (l->cursor < l->content_len && is_symbol(l->content[l->cursor])) {
+        
+        while (lexer_can_peek(l) && (isalnum(lexer_peek(l)) || lexer_peek(l) == '_')) {
             lexer_consume(l, 1);
         }
+ 
+        token.text_len = &lexer_peek(l) - token.text;
 
-        token.text_len = &l->content[l->cursor] - token.text;
-
+        size_t keywords_count = get_keywords_count;
         for (size_t i = 0; i < keywords_count; ++i) {
             size_t keyword_len = strlen(keywords[i]);
             if (keyword_len == token.text_len && memcmp(keywords[i], token.text, keyword_len) == 0) {
@@ -159,66 +227,148 @@ Token lexer_next(Lexer *l) {
         token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
-
+    
     if (lexer_starts_with(l, "--")) {
         lexer_consume(l, 2);
-        token.type = TOKEN_COMMENT;
-
+        
         if (lexer_starts_with(l, "[[")) {
             lexer_consume(l, 2);
-
+            
             while (!lexer_starts_with(l, "]]")) {
                 lexer_consume(l, 1);
             }
         } else {
-            while (l->cursor < l->content_len && l->content[l->cursor] != '\n' && l->content[l->cursor] != '\r') {
+            while (lexer_can_peek(l) && !lexer_peek_is(l, '\n') && !lexer_peek_is(l, '\r')) {
                 lexer_consume(l, 1);
             }
         }
-
-        token.text_len = &l->content[l->cursor] - token.text;
+        
+        token.type = TOKEN_COMMENT;
+        token.text_len = &lexer_peek(l) - token.text;
         token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
-
-    if (l->content[l->cursor] == '\"' || l->content[l->cursor] == '\'') {
-        const char quoteType = l->content[l->cursor];
+    
+    if (lexer_peek_is(l, '\"') || lexer_peek_is(l, '\'')) {
+        //TODO: handle escape sequences
+        
+        const char quoteType = lexer_peek(l);
         lexer_consume(l, 1);
-
-        // TODO: should also handle escape sequence like \n
-        while (l->cursor < l->content_len && l->content[l->cursor] != quoteType) {
+        
+        token.text = &lexer_peek(l);
+        while (lexer_can_peek(l) && !lexer_peek_is(l, quoteType)) {
             lexer_consume(l, 1);
         }
-        if (l->cursor < l->content_len) {
-            lexer_consume(l, 1);
-        }
-
+        token.text_len = &lexer_peek(l) - token.text;
+        lexer_consume(l, 1);
+        
         token.type = TOKEN_STRING;
-        token.text_len = &l->content[l->cursor] - token.text;
         token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
-    //TODO: handle multi line string "[==['str']==]" "[['str']]" 
-
-    if (isdigit(l->content[l->cursor])) {
-        token.type = TOKEN_NUMBER;
-
-        while (l->cursor < l->content_len && isdigit(l->content[l->cursor])) {
+    
+    if (lexer_peek_is(l, '[')
+        && (lexer_peek_is_with_offset(l, '[', 1)
+            || lexer_peek_is_with_offset(l, '=', 1))) {
+        //TODO: handle multi line string "[===['str']===]" "[['str']]" 
+        
+        size_t count = 0;
+        while (lexer_peek_is_with_offset(l, '=', count + 1)) {
+            ++count;
+        }
+        
+        if (lexer_peek_is_with_offset(l, '[', count + 1)) {
+            return *multiline_string(l, &start_pos, &token, count);
+        }
+    }
+    
+    if (isdigit(lexer_peek(l))) {
+        lexer_consume(l, 1);
+        
+        if (lexer_peek_is(l, 'x') || lexer_peek_is(l, 'X')) {
+            lexer_consume(l, 1);
+            bool found_point = false;
+            while (lexer_can_peek(l)) {
+                if (!found_point && lexer_peek(l) == '.') {
+                    lexer_consume(l, 1);
+                    found_point = true;
+                    continue;
+                }
+                
+                if (!(isdigit(lexer_peek(l))
+                    || lexer_peek(l) == 'a'
+                    || lexer_peek(l) == 'b'
+                    || lexer_peek(l) == 'c'
+                    || lexer_peek(l) == 'd'
+                    || lexer_peek(l) == 'e'
+                    || lexer_peek(l) == 'f'
+                    || lexer_peek(l) == 'A'
+                    || lexer_peek(l) == 'B'
+                    || lexer_peek(l) == 'C'
+                    || lexer_peek(l) == 'D'
+                    || lexer_peek(l) == 'E'
+                    || lexer_peek(l) == 'F')) {
+                    break;
+                }
+                lexer_consume(l, 1);
+            }
+            
+            if (lexer_can_peek(l) && (lexer_peek(l) == 'p' || lexer_peek(l) == 'P')) {
+                lexer_consume(l, 1);
+                if (lexer_can_peek(l) && (lexer_peek(l) == '-' || lexer_peek(l) == '+')) {
+                    lexer_consume(l, 1);
+                }
+                
+                while (lexer_can_peek(l) && isdigit(lexer_peek(l))) {
+                    lexer_consume(l, 1);
+                }
+            }
+            
+            token.type = TOKEN_NUMBER;
+            token.text_len = &lexer_peek(l) - token.text;
+            token.position = char_position_from_to(start_pos, lexer_get_position(l));
+            return token;
+        }
+        
+        bool found_point = false;
+        bool found_exponent = false;
+        while (lexer_can_peek(l)) {
+            if (!found_point && !found_exponent && lexer_peek(l) == '.') {
+                lexer_consume(l, 1);
+                found_point = true;
+                continue;
+            }
+            
+            if (!found_exponent && (lexer_peek(l) == 'e' || lexer_peek(l) == 'E')) {
+                lexer_consume(l, 1);
+                found_exponent = true;
+                
+                if (lexer_can_peek(l) && (lexer_peek(l) == '-' || lexer_peek(l) == '+')) {
+                    lexer_consume(l, 1);    
+                }
+                
+                continue;
+            }
+            
+            if (!isdigit(lexer_peek(l))) {
+                break;
+            }
             lexer_consume(l, 1);
         }
-
-        token.text_len = &l->content[l->cursor] - token.text;
+        
+        token.type = TOKEN_NUMBER;
+        token.text_len = &lexer_peek(l) - token.text;
         token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
-
-    int lit_tokens_count = literal_tokens_count;
-    for (int i = 0; i < lit_tokens_count; ++i) {
-        //NOTE: this code assumes there no newline in literal_tokens[i].text
+    
+    int lit_tokens_count = get_literal_tokens_count;
+    for (size_t i = 0; i < lit_tokens_count; ++i) {
+        //NOTE: this code assumes there are no newline in liter_tokens[i].text
         if (lexer_starts_with(l, literal_tokens[i].text)) {
             size_t text_len = strlen(literal_tokens[i].text);
             lexer_consume(l, text_len);
-
+            
             token.type = literal_tokens[i].type;
             token.text_len = text_len;
             token.position = char_position_from_to(start_pos, lexer_get_position(l));
