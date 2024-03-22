@@ -1,5 +1,5 @@
-#ifndef LUATRANSPILER_CHAR_POSITION_H
-#define LUATRANSPILER_CHAR_POSITION_H
+#ifndef LUAPARSER_CHAR_POSITION_H
+#define LUAPARSER_CHAR_POSITION_H
 #include "Position.h"
 
 typedef struct {
@@ -25,4 +25,4 @@ Position char_position_to_position(CharPosition pos) {
     return position;
 }
 
-#endif //LUATRANSPILER_CHAR_POSITION_H
+#endif //LUAPARSER_CHAR_POSITION_H

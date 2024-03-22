@@ -77,9 +77,7 @@ CharPosition lexer_get_position(Lexer *l) {
 }
 
 #define lexer_peek(l) (l->content[l->cursor])
-#define lexer_peek_with_offset(l, offset) (l->content[l->cursor + offset])
 #define lexer_can_peek(l) (l->cursor < l->content_len)
-#define lexer_can_peek_with_offset(l, offset) (l->cursor + offset < l->content_len)
 
 bool lexer_peek_is(Lexer *l, char c) {
     if (l->cursor >= l->content_len) {
@@ -252,13 +250,13 @@ Token lexer_next(Lexer *l) {
         return token;
     }
     
-    if (lexer_peek_is(l, '\"') || lexer_peek_is(l, '\'')) {
+    if (lexer_can_peek(l) && (lexer_peek(l) == '\"' || lexer_peek(l) == '\'')) {
         //TODO: handle escape sequences
         const char quoteType = lexer_peek(l);
         lexer_consume(l, 1);
         
         token.text = &lexer_peek(l);
-        while (lexer_can_peek(l) && !lexer_peek_is(l, quoteType)) {
+        while (!lexer_peek_is(l, quoteType)) {
             lexer_consume(l, 1);
         }
         token.text_len = &lexer_peek(l) - token.text;
@@ -286,7 +284,7 @@ Token lexer_next(Lexer *l) {
     if (isdigit(lexer_peek(l))) {
         lexer_consume(l, 1);
         
-        if (lexer_peek_is(l, 'x') || lexer_peek_is(l, 'X')) {
+        if (lexer_peek(l) && (lexer_peek(l) == 'x' || lexer_peek(l) == 'X')) {
             lexer_consume(l, 1);
             bool found_point = false;
             while (lexer_can_peek(l)) {
@@ -296,19 +294,11 @@ Token lexer_next(Lexer *l) {
                     continue;
                 }
                 
-                if (!(isdigit(lexer_peek(l))
-                    || lexer_peek(l) == 'a'
-                    || lexer_peek(l) == 'b'
-                    || lexer_peek(l) == 'c'
-                    || lexer_peek(l) == 'd'
-                    || lexer_peek(l) == 'e'
-                    || lexer_peek(l) == 'f'
-                    || lexer_peek(l) == 'A'
-                    || lexer_peek(l) == 'B'
-                    || lexer_peek(l) == 'C'
-                    || lexer_peek(l) == 'D'
-                    || lexer_peek(l) == 'E'
-                    || lexer_peek(l) == 'F')) {
+                
+                char x = lexer_peek(l);
+                if (!(isdigit(x)
+                    || x == 'a' || x == 'b' || x == 'c' || x == 'd' || x == 'e' || x == 'f'
+                    || x == 'A' || x == 'B' || x == 'C' || x == 'D' || x == 'E' || x == 'F')) {
                     break;
                 }
                 lexer_consume(l, 1);

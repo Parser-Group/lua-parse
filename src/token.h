@@ -1,5 +1,5 @@
-#ifndef LUATRANSPILER_TOKEN_H
-#define LUATRANSPILER_TOKEN_H
+#ifndef LUAPARSER_TOKEN_H
+#define LUAPARSER_TOKEN_H
 
 #include "utils.h"
 #include "Position.h"
@@ -63,4 +63,4 @@ typedef struct {
     size_t text_len;
 } Token;
 
-#endif //LUATRANSPILER_TOKEN_H
+#endif //LUAPARSER_TOKEN_H

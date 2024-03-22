@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <malloc.h>
+#include <time.h>
 #include <string.h>
 
 #include "lexer/lexer.h"
@@ -8,7 +9,8 @@ int main() {
     char *content;
     size_t content_len;
     { // load from file
-        FILE *file = fopen(".\\..\\Test.lua", "rb");
+//        FILE *file = fopen(".\\..\\Test.lua", "rb");
+        FILE *file = fopen("C:\\Coding\\C#\\Lua\\FINLuaDocumentationSumneko.lua", "rb");
         if (file == NULL) {
             printf("Error opening file.\n");
             return 1;
@@ -42,18 +44,24 @@ int main() {
 
     Lexer l = lexer_new(content, content_len);
     Token t;
+    
+    int start = clock();
+    
     t = lexer_next(&l);
-
     while (t.type != TOKEN_END) {
-        printf("'%.*s' (%s)<%zu:%zu-%zu:%zu>\n",
-               (int)t.text_len,
-               t.text,
-               token_type_name(t.type),
-               t.position.start_line, t.position.start_column,
-               t.position.end_line, t.position.end_column);
+//        printf("'%.*s' (%s)<%zu:%zu-%zu:%zu>\n",
+//               (int)t.text_len,
+//               t.text,
+//               token_type_name(t.type),
+//               t.position.start_line, t.position.start_column,
+//               t.position.end_line, t.position.end_column);
 
         t = lexer_next(&l);
     }
 
+    int end = clock();
+
+    printf("took %dms", end - start);
+    
     return 0;
 }

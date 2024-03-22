@@ -1,5 +1,5 @@
-#ifndef LUATRANSPILER_LEXER_H
-#define LUATRANSPILER_LEXER_H
+#ifndef LUAPARSER_LEXER_H
+#define LUAPARSER_LEXER_H
 #include "token.h"
 
 typedef struct {
@@ -13,4 +13,4 @@ typedef struct {
 Lexer  lexer_new(const char *content, size_t content_len);
 Token  lexer_next(Lexer *l);
 
-#endif //LUATRANSPILER_LEXER_H
+#endif //LUAPARSER_LEXER_H

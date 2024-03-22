@@ -1,5 +1,5 @@
-#ifndef LUATRANSPILER_POSITION_H
-#define LUATRANSPILER_POSITION_H
+#ifndef LUAPARSER_POSITION_H
+#define LUAPARSER_POSITION_H
 
 typedef struct {
     size_t start_line;
@@ -8,4 +8,4 @@ typedef struct {
     size_t end_column;
 } Position;
 
-#endif //LUATRANSPILER_POSITION_H
+#endif //LUAPARSER_POSITION_H

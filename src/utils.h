@@ -1,5 +1,5 @@
-#ifndef LUATRANSPILER_UTILS_H
-#define LUATRANSPILER_UTILS_H
+#ifndef LUAPARSER_UTILS_H
+#define LUAPARSER_UTILS_H
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -18,4 +18,4 @@
 
 #define UNUSED(x) (void)(x)
 
-#endif //LUATRANSPILER_UTILS_H
+#endif //LUAPARSER_UTILS_H
