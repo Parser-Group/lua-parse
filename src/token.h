@@ -1,8 +1,8 @@
-#ifndef LUAPARSER_TOKEN_H
-#define LUAPARSER_TOKEN_H
+#ifndef LUA_PARSER_TOKEN_H
+#define LUA_PARSER_TOKEN_H
 
-#include "utils.h"
-#include "Position.h"
+#include "common.h"
+#include "position.h"
 
 typedef enum {
     TOKEN_END = 0,
@@ -56,11 +56,13 @@ typedef enum {
 
 const char *token_type_name(TokenType type);
 
-typedef struct {
+typedef struct Token {
     Position position;
     TokenType type;
     const char *text;
     size_t text_len;
 } Token;
 
-#endif //LUAPARSER_TOKEN_H
+bool token_is_keyword(const char *keyword, Token *token);
+
+#endif //LUA_PARSER_TOKEN_H

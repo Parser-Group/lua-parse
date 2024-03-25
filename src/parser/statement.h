@@ -1,23 +1,23 @@
-#ifndef LUAPARSER_STATEMENT_H
-#define LUAPARSER_STATEMENT_H
+#ifndef LUA_PARSER_STATEMENT_H
+#define LUA_PARSER_STATEMENT_H
 
-#include "Position.h"
 #include "parser.h"
 
 typedef enum {
-    None = 0,
-    Assignment
-} StatementType;
+    STATEMENT_END = 0,
+
+    // local
+    STATEMENT_LOCAL_VARIABLE_DECLARATION,
+    STATEMENT_LOCAL_FUNCTION_DECLARATION,
+    
+    } StatementType;
 
 typedef struct {
     Position position;
     StatementType type;
+    void *value;
 } Statement;
 
-Statement statement_parse(Parser *p) {
-    Token token = lexer_next(p->lexer);
-    
-    
-}
+Statement parser_statement(Parser *p);
 
-#endif //LUAPARSER_STATEMENT_H
+#endif //LUA_PARSER_STATEMENT_H

@@ -1,8 +1,9 @@
-#ifndef LUAPARSER_UTILS_H
-#define LUAPARSER_UTILS_H
+#ifndef LUA_PARSER_COMMON_H
+#define LUA_PARSER_COMMON_H
 
-#include "stdio.h"
-#include "stdlib.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define UNIMPLEMENTED(...)                                                      \
     do {                                                                        \
@@ -18,4 +19,4 @@
 
 #define UNUSED(x) (void)(x)
 
-#endif //LUAPARSER_UTILS_H
+#endif //LUA_PARSER_COMMON_H

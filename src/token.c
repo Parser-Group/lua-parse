@@ -1,3 +1,4 @@
+#include <memory.h>
 #include "token.h"
 
 const char *token_type_name(TokenType type) {
@@ -92,4 +93,8 @@ const char *token_type_name(TokenType type) {
         default:
             UNREACHABLE("token_type_name");
     }
+}
+
+bool token_is_keyword(const char *text, Token *token) {
+    return token->type == TOKEN_KEYWORD && memcmp(text, token->text, token->text_len) == 0;
 }

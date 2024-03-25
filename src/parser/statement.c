@@ -1,13 +1,7 @@
-#include "parser.h"
 #include "statement.h"
+#include "variable_declaration.h"
 
-Parser parser_new(Lexer *l) {
-    Parser parser;
-    parser.lexer = l;
-    return parser;
-}
-
-Statement parser_next(Parser *p) {
+Statement parser_statement(Parser *p) {
     Statement statement = {0};
 
     Token token = lexer_next(p->lexer);
@@ -17,14 +11,17 @@ Statement parser_next(Parser *p) {
         token = lexer_next(p->lexer);
 
         if (token.type == TOKEN_SYMBOL) {
-            //TODO: variable declaration
+            VariableDeclaration var = parse_variable_declaration(p, token);
 
-            token = lexer_next(p->lexer);
-
+            statement.type = STATEMENT_LOCAL_VARIABLE_DECLARATION;
+            statement.position = position_from_to(start_pos, )
+            return statement;
         }
 
         if (token_is_keyword("function", &token)) {
             //TODO: function declaration
         }
     }
+
+
 }

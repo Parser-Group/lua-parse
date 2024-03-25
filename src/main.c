@@ -9,8 +9,8 @@ int main() {
     char *content;
     size_t content_len;
     { // load from file
-//        FILE *file = fopen(".\\..\\Test.lua", "rb");
-        FILE *file = fopen("C:\\Coding\\C#\\Lua\\FINLuaDocumentationSumneko.lua", "rb");
+        FILE *file = fopen(".\\..\\Test.lua", "rb");
+//        FILE *file = fopen("C:\\Coding\\C#\\Lua\\FINLuaDocumentationSumneko.lua", "rb");
         if (file == NULL) {
             printf("Error opening file.\n");
             return 1;

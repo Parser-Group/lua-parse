@@ -1,5 +1,5 @@
-#ifndef LUAPARSER_PARSER_H
-#define LUAPARSER_PARSER_H
+#ifndef LUA_PARSER_PARSER_H
+#define LUA_PARSER_PARSER_H
 #include "lexer/lexer.h"
 
 typedef struct {
@@ -8,4 +8,4 @@ typedef struct {
 
 Parser parser_new(Lexer *l);
 
-#endif //LUAPARSER_PARSER_H
+#endif //LUA_PARSER_PARSER_H

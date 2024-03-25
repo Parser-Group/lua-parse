@@ -1,6 +1,6 @@
-#ifndef LUAPARSER_CHAR_POSITION_H
-#define LUAPARSER_CHAR_POSITION_H
-#include "Position.h"
+#ifndef LUA_LEXER_CHAR_POSITION_H
+#define LUA_LEXER_CHAR_POSITION_H
+#include "position.h"
 
 typedef struct {
     size_t line;
@@ -25,4 +25,4 @@ Position char_position_to_position(CharPosition pos) {
     return position;
 }
 
-#endif //LUAPARSER_CHAR_POSITION_H
+#endif //LUA_LEXER_CHAR_POSITION_H
