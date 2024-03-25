@@ -2,7 +2,7 @@
 #define LUAPARSER_TOKEN_H
 
 #include "utils.h"
-#include "Position.h"
+#include "position.h"
 
 typedef enum {
     TOKEN_END = 0,

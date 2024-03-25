@@ -10,7 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 add_executable(LuaParser
         src/main.c
         src/token.h
-        src/Position.h
+        src/position.h
         src/lexer/lexer.h
         src/lexer/char_position.h
         src/utils.h
@@ -19,4 +19,12 @@ add_executable(LuaParser
         src/parser/parser.c
         src/parser/parser.h
         src/parser/statement.h
+        src/parser/parser_structs.h
+        src/parser/expressions.c
+        src/parser/expressions.h
+        src/parser/statement.c
+        src/parser/expression_structs.h
+        src/parser/statement_structs.h
+        src/parser/parser_utils.h
+        src/parser/parser_utils.c
 )

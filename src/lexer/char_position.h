@@ -1,6 +1,6 @@
 #ifndef LUAPARSER_CHAR_POSITION_H
 #define LUAPARSER_CHAR_POSITION_H
-#include "Position.h"
+#include "position.h"
 
 typedef struct {
     size_t line;
