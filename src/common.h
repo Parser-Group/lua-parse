@@ -1,4 +1,4 @@
-#ifndef LUAPARSER_PARSER_UTILS_H
+#ifndef LUAPARSER_UTILS_H
 #define LUAPARSER_PARSER_UTILS_H
 
 #include "stdio.h"
@@ -18,4 +18,4 @@
 
 #define UNUSED(x) (void)(x)
 
-#endif //LUAPARSER_PARSER_UTILS_H
+#endif //LUAPARSER_UTILS_H

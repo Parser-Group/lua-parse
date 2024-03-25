@@ -13,7 +13,7 @@ add_executable(LuaParser
         src/position.h
         src/lexer/lexer.h
         src/lexer/char_position.h
-        src/utils.h
+        src/common.h
         src/token.c
         src/lexer/lexer.c
         src/parser/parser.c
@@ -25,6 +25,6 @@ add_executable(LuaParser
         src/parser/statement.c
         src/parser/expression_structs.h
         src/parser/statement_structs.h
-        src/parser/parser_utils.h
-        src/parser/parser_utils.c
+        src/parser/utils.h
+        src/parser/utils.c
 )

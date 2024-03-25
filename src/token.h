@@ -1,7 +1,7 @@
 #ifndef LUAPARSER_TOKEN_H
 #define LUAPARSER_TOKEN_H
 
-#include "utils.h"
+#include "common.h"
 #include "position.h"
 
 typedef enum {
@@ -25,33 +25,33 @@ typedef enum {
     TOKEN_COLON,
     TOKEN_SEMICOLON,
     TOKEN_COMMA,
-    
-    TOKEN_BIT_NOT,
-    TOKEN_BIT_OR,
-    TOKEN_BIT_AND,
-    TOKEN_BIT_SHIFT_LEFT,
-    TOKEN_BIT_SHIFT_RIGHT,
-    
-    TOKEN_EQUALS,
-    TOKEN_NOT_EQUALS,
-    TOKEN_GREATER_THAN,
-    TOKEN_GREATER_THAN_OR_EQUAL,
-    TOKEN_LESS_THAN,
-    TOKEN_LESS_THAN_OR_EQUAL,
+    TOKEN_EQUAL,
     
     TOKEN_GOTO,
-    TOKEN_STRING_CONCAT,
     TOKEN_VAR_ARG,
-    
-    TOKEN_EQUAL,
-    TOKEN_PLUS,
-    TOKEN_MINUS,
-    TOKEN_TIMES,
-    TOKEN_DIVIDE,
-    TOKEN_POWER,
-    TOKEN_MODULO,
     TOKEN_LENGTH,
-
+    
+    TOKEN_BIT_NOT = 50,
+    TOKEN_BIT_OR = 51,
+    TOKEN_BIT_AND = 52,
+    TOKEN_BIT_SHIFT_LEFT = 53,
+    TOKEN_BIT_SHIFT_RIGHT = 54,
+    
+    TOKEN_EQUALS = 60,
+    TOKEN_NOT_EQUALS = 61,
+    TOKEN_GREATER_THAN = 62,
+    TOKEN_GREATER_THAN_OR_EQUAL = 63,
+    TOKEN_LESS_THAN = 64,
+    TOKEN_LESS_THAN_OR_EQUAL = 65,
+    
+    TOKEN_STRING_CONCAT = 70,
+    
+    TOKEN_PLUS = 101,
+    TOKEN_MINUS = 102,
+    TOKEN_MULTIPLY = 103,
+    TOKEN_DIVIDE = 104,
+    TOKEN_POWER = 105,
+    TOKEN_MODULO = 106,
 } TokenType;
 
 const char *token_type_name(TokenType type);

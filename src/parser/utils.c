@@ -1,5 +1,5 @@
 #include <string.h>
-#include "parser_utils.h"
+#include "utils.h"
 
 bool keyword_is(const char* keyword, Token token) {
     if (strlen(keyword) > token.text_len) {
