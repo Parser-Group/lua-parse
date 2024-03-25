@@ -1,5 +1,5 @@
-#ifndef LUAPARSER_PARSER_STRUCTS_H
-#define LUAPARSER_PARSER_STRUCTS_H
+#ifndef LUA_PARSER_PARSER_STRUCTS_H
+#define LUA_PARSER_PARSER_STRUCTS_H
 
 #include "lexer/lexer.h"
 
@@ -8,4 +8,4 @@ typedef struct {
     Token cur_token;
 } Parser;
 
-#endif //LUAPARSER_PARSER_STRUCTS_H
+#endif //LUA_PARSER_PARSER_STRUCTS_H

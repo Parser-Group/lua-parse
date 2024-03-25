@@ -19,11 +19,6 @@ add_executable(Lua_Parser
         src/parser/parser.c
         src/parser/parser.h
         src/parser/statement.h
-<<<<<<< HEAD
-        src/parser/statement.c
-        "src/parser/variable_declaration.h"
-        src/position.c
-=======
         src/parser/parser_structs.h
         src/parser/expressions.c
         src/parser/expressions.h
@@ -32,5 +27,4 @@ add_executable(Lua_Parser
         src/parser/statement_structs.h
         src/parser/utils.h
         src/parser/utils.c
->>>>>>> 1cdf131b447ff24272bf29e9532aab39b9b697d7
 )

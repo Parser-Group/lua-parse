@@ -1,5 +1,5 @@
-#ifndef LUAPARSER_STATEMENT_STRUCTS_H
-#define LUAPARSER_STATEMENT_STRUCTS_H
+#ifndef LUA_PARSER_STATEMENT_STRUCTS_H
+#define LUA_PARSER_STATEMENT_STRUCTS_H
 
 #include "position.h"
 
@@ -14,4 +14,4 @@ typedef struct {
     void *value;
 } Statement;
 
-#endif //LUAPARSER_STATEMENT_STRUCTS_H
+#endif //LUA_PARSER_STATEMENT_STRUCTS_H

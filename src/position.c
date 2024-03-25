@@ -8,3 +8,9 @@ Position position_from_to(Position *start, Position *end) {
     pos.end_column = end->end_column;
     return pos;
 }
+
+const char* position_to_string(Position *pos) {
+    char *str = "";
+    sprintf(str, "<%zu:%zu-%zu:%zu>", pos->start_line, pos->start_column, pos->end_line, pos->end_column);
+    return str;
+}

@@ -1,12 +1,16 @@
-#ifndef LUAPARSER_EXPRESSION_STRUCTS_H
-#define LUAPARSER_EXPRESSION_STRUCTS_H
+#ifndef LUA_PARSER_EXPRESSION_STRUCTS_H
+#define LUA_PARSER_EXPRESSION_STRUCTS_H
 
 #include "position.h"
 
 typedef enum {
     EXPRESSION_NONE = 0,
+
+    EXPRESSION_VARIABLE,
+    EXPRESSION_VARIABLE_INDEX,
+    EXPRESSION_VARIABLE_NAME_INDEX,
     
-    EXPRESSION_BINARY
+    EXPRESSION_BINARY,
 } ExpressionType;
 
 typedef struct {
@@ -51,4 +55,23 @@ typedef struct {
     Expression *right;
 } BinaryExpression;
 
-#endif //LUAPARSER_EXPRESSION_STRUCTS_H
+typedef struct {
+    Expression *parent;
+    const char *text;
+    size_t text_len;
+} VariableExpression;
+
+typedef struct {
+    Expression *parent;
+    Expression *first;
+    const char *index;
+    size_t index_len;
+} VariableNameIndex;
+
+typedef struct {
+    Expression *parent;
+    Expression *first;
+    Expression index;
+} VariableIndex;
+
+#endif //LUA_PARSER_EXPRESSION_STRUCTS_H
