@@ -78,8 +78,8 @@ const char *token_type_name(TokenType type) {
             return "plus";
         case TOKEN_MINUS:
             return "minus";
-        case TOKEN_TIMES:
-            return "times";
+        case TOKEN_MULTIPLY:
+            return "multiply";
         case TOKEN_DIVIDE:
             return "divide";
         case TOKEN_POWER:

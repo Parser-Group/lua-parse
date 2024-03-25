@@ -1,4 +1,5 @@
 #include "statement.h"
+<<<<<<< HEAD
 #include "variable_declaration.h"
 
 Statement parser_statement(Parser *p) {
@@ -24,4 +25,14 @@ Statement parser_statement(Parser *p) {
     }
 
 
+=======
+#include "utils.h"
+
+Statement statement_parse(Parser *p) {
+    
+    if (keyword_is("local", p->cur_token)) {
+        
+    }
+    
+>>>>>>> 1cdf131b447ff24272bf29e9532aab39b9b697d7
 }

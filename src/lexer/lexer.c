@@ -45,7 +45,7 @@ LiteralToken literal_tokens[] = {
         {.text = "=", .type = TOKEN_EQUAL},
         {.text = "+", .type = TOKEN_PLUS},
         {.text = "-", .type = TOKEN_MINUS},
-        {.text = "*", .type = TOKEN_TIMES},
+        {.text = "*", .type = TOKEN_MULTIPLY},
         {.text = "/", .type = TOKEN_DIVIDE},
         {.text = "^", .type = TOKEN_POWER},
         {.text = "%", .type = TOKEN_MODULO},

@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 #ifndef LUA_LEXER_CHAR_POSITION_H
 #define LUA_LEXER_CHAR_POSITION_H
+=======
+#ifndef LUAPARSER_CHAR_POSITION_H
+#define LUAPARSER_CHAR_POSITION_H
+>>>>>>> 1cdf131b447ff24272bf29e9532aab39b9b697d7
 #include "position.h"
 
 typedef struct {
