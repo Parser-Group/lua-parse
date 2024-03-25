@@ -51,22 +51,38 @@ Expression binary_expression_parse(Parser *p, Expression left) {
 }
 
 Expression internal_expression_parse(Parser *p) {
-    if (p->cur_token.type == TOKEN_SYMBOL) {
+    Token token = p->cur_token;
+    
+    if (token.type == TOKEN_SYMBOL) {
         Expression exp;
         
         VariableExpression varExp;
-        varExp.text = p->cur_token.text;
-        varExp.text_len = p->cur_token.text_len;
+        varExp.text = token.text;
+        varExp.text_len = token.text_len;
         varExp.parent = &exp;
         
         exp.type = EXPRESSION_VARIABLE;
-        exp.position = p->cur_token.position;
+        exp.position = token.position;
         exp.value = &varExp;
         
         return exp;
     }
     
-    
+    if (token.type == TOKEN_OPEN_PAREN) {
+        parser_consume(p);
+        
+        Expression exp = expression_parse(p);
+        
+        if (p->cur_token.type != TOKEN_CLOSE_PAREN) {
+            //TODO: print missing parenthesis
+            printf("%s miss parenthesis", position_to_string(&token.position));
+        }
+        else {
+            parser_consume(p);
+        }
+        
+        return exp;
+    }
 }
 
 Expression expression_chain_parse(Parser *p, Expression first) {
@@ -76,30 +92,33 @@ Expression expression_chain_parse(Parser *p, Expression first) {
     if (exp.type != EXPRESSION_NONE) {
         return exp;
     }
+
+    if (p->cur_token.type == TOKEN_OPEN_BRACKET) {
+        Token openBracket = p->cur_token;
+        parser_consume(p);
+
+        VariableIndex varExp;
+        varExp.parent = &exp;
+        varExp.first = &first;
+        varExp.index = expression_parse(p);
+
+        exp.type = EXPRESSION_VARIABLE_INDEX;
+        exp.position = position_from_to(&first.position, &varExp.index.position);
+        exp.value = &varExp;
+
+        if (p->cur_token.type != TOKEN_CLOSE_BRACKET) {
+            //TODO: print missing bracket
+            printf("%s miss bracket", position_to_string(&openBracket.position));
+        }
+        else {
+            parser_consume(p);
+        }
+
+        return exp;
+    }
     
     if (p->cur_token.type == TOKEN_DOT) {
         parser_consume(p);
-        
-        if (p->cur_token.type == TOKEN_OPEN_BRACKET) {
-            Token openBracket = p->cur_token;
-            parser_consume(p);
-            
-            VariableIndex varExp;
-            varExp.parent = &exp;
-            varExp.first = &first;
-            varExp.index = expression_parse(p);
-            
-            exp.type = EXPRESSION_VARIABLE_INDEX;
-            exp.position = position_from_to(&first.position, &varExp.index.position);
-            exp.value = &varExp;
-            
-            if (p->cur_token.type != TOKEN_CLOSE_BRACKET) {
-                //TODO: print missing bracket
-                printf("%s miss bracket", position_to_string(&openBracket.position));
-            }
-            
-            return exp;
-        }
         
         if (p->cur_token.type == TOKEN_SYMBOL) {
             VariableNameIndex varExp;
