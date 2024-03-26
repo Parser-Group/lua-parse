@@ -2,6 +2,7 @@
 #define LUA_PARSER_EXPRESSION_STRUCTS_H
 
 #include "position.h"
+#include "statement_struct.h"
 
 typedef enum {
     EXPRESSION_NONE = 0,
@@ -65,12 +66,31 @@ typedef struct {
     Expression *first;
     const char *index;
     size_t index_len;
-} VariableNameIndex;
+} VariableNameIndexExpression;
 
 typedef struct {
     Expression *parent;
     Expression *first;
     Expression index;
-} VariableIndex;
+} VariableIndexExpression;
+
+typedef struct {
+    const char *text;
+    size_t text_len;
+} FunctionParameter;
+
+typedef struct FunctionParameterNode {
+    struct FunctionParameterNode *next;
+    FunctionParameter *value;
+} FunctionParameterNode;
+
+
+typedef struct {
+    Position position;
+    const char *text;
+    int text_len;
+    FunctionParameterNode *parameters;
+    StatementNode *statements;
+} FunctionExpression;
 
 #endif //LUA_PARSER_EXPRESSION_STRUCTS_H

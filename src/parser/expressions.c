@@ -1,9 +1,60 @@
 #include "expressions.h"
+
+#include <string.h>
+
 #include "position.h"
+#include "output.h"
 
 Expression expression_empty() {
     Expression exp = {0};
     return exp;
+}
+
+FunctionParameter function_parameter_parse(Parser *p) {
+    if (p->cur_token.type == TOKEN_KEYWORD) {
+        const char *message = "unexpected keyword in parameter";
+        output_unexpected_keyword(p, &p->cur_token.position, message, strlen(message));
+    }
+    
+    FunctionParameter parameter;
+    parameter.text = p->cur_token.text;
+    parameter.text_len = p->cur_token.text_len;
+    
+    //TODO: finish
+}
+
+FunctionExpression function_expression_parse(Parser *p, Token func) {
+    if (p->cur_token.type != TOKEN_OPEN_PAREN) {
+        const char *message = "missing open parenthesis";
+        output_miss_open_paren(p, &func.position, message, strlen(message));
+    }
+    else {
+        parser_consume(p);
+    }
+    
+    FunctionParameterNode head = {0};
+    FunctionParameterNode current = head;
+    while (true) {
+        if (p->cur_token.type == TOKEN_SYMBOL || p->cur_token.type == TOKEN_KEYWORD) {
+            FunctionParameter parameter = function_parameter_parse(p);
+
+            FunctionParameterNode node;
+            node.value = &parameter;
+
+            current.next = &node;
+            current = node;
+            parser_consume(p);
+        }
+        
+        if (p->cur_token.type == TOKEN_COMMA) {
+            parser_consume(p);
+            continue;
+        }
+        
+        break;
+    }
+    
+    //TODO: finish
 }
 
 Expression binary_expression_parse(Parser *p, Expression left) {
@@ -74,8 +125,7 @@ Expression internal_expression_parse(Parser *p) {
         Expression exp = expression_parse(p);
         
         if (p->cur_token.type != TOKEN_CLOSE_PAREN) {
-            //TODO: print missing parenthesis
-            printf("%s miss parenthesis", position_to_string(&token.position));
+            output_miss_close_paren(p, &token.position, "", 0);
         }
         else {
             parser_consume(p);
@@ -83,6 +133,8 @@ Expression internal_expression_parse(Parser *p) {
         
         return exp;
     }
+    
+    //TODO: finish
 }
 
 Expression expression_chain_parse(Parser *p, Expression first) {
@@ -97,18 +149,21 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         Token openBracket = p->cur_token;
         parser_consume(p);
 
-        VariableIndex varExp;
+        VariableIndexExpression varExp;
         varExp.parent = &exp;
         varExp.first = &first;
         varExp.index = expression_parse(p);
-
+        
         exp.type = EXPRESSION_VARIABLE_INDEX;
         exp.position = position_from_to(&first.position, &varExp.index.position);
         exp.value = &varExp;
 
+        if (varExp.index.type == EXPRESSION_NONE) {
+            output_miss_expression(p, &openBracket.position, "", 0);
+        }
+        
         if (p->cur_token.type != TOKEN_CLOSE_BRACKET) {
-            //TODO: print missing bracket
-            printf("%s miss bracket", position_to_string(&openBracket.position));
+            output_miss_close_bracket(p, &openBracket.position, "", 0);
         }
         else {
             parser_consume(p);
@@ -118,10 +173,11 @@ Expression expression_chain_parse(Parser *p, Expression first) {
     }
     
     if (p->cur_token.type == TOKEN_DOT) {
+        Token dot = p->cur_token;
         parser_consume(p);
         
         if (p->cur_token.type == TOKEN_SYMBOL) {
-            VariableNameIndex varExp;
+            VariableNameIndexExpression varExp;
             varExp.parent = &exp;
             varExp.first = &first;
             varExp.index = p->cur_token.text;
@@ -133,6 +189,9 @@ Expression expression_chain_parse(Parser *p, Expression first) {
             
             return exp;
         }
+
+        output_miss_symbol(p, &dot.position, "", 0);
+        return expression_empty();
     }
     
     return exp;

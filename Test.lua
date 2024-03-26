@@ -228,6 +228,6 @@ local validFloat8 = 0X1.921FB54442D18P+1
 local multilineString = [===[test 
 multilineString]===]
 
-local func = (function()
+local expression = (function()
     print("hi")
 end)
