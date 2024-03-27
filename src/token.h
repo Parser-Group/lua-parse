@@ -34,8 +34,8 @@ typedef enum {
     TOKEN_KEYWORD,
     TOKEN_COMMENT,
 
-    TOKEN_STRING,
     TOKEN_NUMBER,
+    TOKEN_STRING,
     
     TOKEN_OPEN_PAREN,
     TOKEN_CLOSE_PAREN,

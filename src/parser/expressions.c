@@ -17,23 +17,25 @@ FunctionParameter function_parameter_parse(Parser *p) {
     }
     
     FunctionParameter parameter;
+    parameter.position = p->cur_token.position;
     parameter.text = p->cur_token.text;
     parameter.text_len = p->cur_token.text_len;
     
-    //TODO: finish
+    return parameter;
 }
 
 FunctionExpression function_expression_parse(Parser *p, Token func) {
-    if (p->cur_token.type != TOKEN_OPEN_PAREN) {
-        const char *message = "missing open parenthesis";
+    Token openParen = p->cur_token;
+    if (openParen.type != TOKEN_OPEN_PAREN) {
+        const char *message = "missing open parenthesis in function parameter declaration";
         output_miss_open_paren(p, &func.position, message, strlen(message));
     }
     else {
         parser_consume(p);
     }
     
-    FunctionParameterNode head = {0};
-    FunctionParameterNode current = head;
+    FunctionParameterNode parameterHead = {0};
+    FunctionParameterNode parameterCurrent = parameterHead;
     while (true) {
         if (p->cur_token.type == TOKEN_SYMBOL || p->cur_token.type == TOKEN_KEYWORD) {
             FunctionParameter parameter = function_parameter_parse(p);
@@ -41,8 +43,8 @@ FunctionExpression function_expression_parse(Parser *p, Token func) {
             FunctionParameterNode node;
             node.value = &parameter;
 
-            current.next = &node;
-            current = node;
+            parameterCurrent.next = &node;
+            parameterCurrent = node;
             parser_consume(p);
         }
         
@@ -54,7 +56,65 @@ FunctionExpression function_expression_parse(Parser *p, Token func) {
         break;
     }
     
-    //TODO: finish
+    Token closeParen = p->cur_token;
+    if (closeParen.type != TOKEN_CLOSE_PAREN && openParen.type == TOKEN_OPEN_PAREN) {
+        const char *message = "missing close parenthesis in function parameter declaration";
+        output_miss_close_paren(p, &openParen.position, message, strlen(message));
+    }
+    else {
+        parser_consume(p);
+    }
+    
+    StatementNode statementHead = {0};
+    StatementNode statementCurrent = statementHead;
+    while (true) {
+        if (token_is_keyword("end", &p->cur_token)) {
+            break;    
+        }
+        
+        Statement statement = statement_parse(p);
+        if (statement.type != STATEMENT_NONE) {
+            StatementNode node;
+            node.value = &statement;
+            
+            statementCurrent.next = &node;
+            statementCurrent = node;
+        }
+    }
+    
+    Position lastPos;
+    if (token_is_keyword("end", &p->cur_token)) {
+        lastPos = p->cur_token.position;
+    }
+    else if (statementCurrent.value != NULL) {
+        lastPos = statementCurrent.value->position;
+    }
+    else if (closeParen.type == TOKEN_CLOSE_PAREN) {
+        lastPos = closeParen.position;
+    }
+    else if (parameterCurrent.value != NULL) {
+        lastPos = parameterCurrent.value->position;
+    }
+    else if (openParen.type == TOKEN_OPEN_PAREN) {
+        lastPos = openParen.position;
+    }
+    else {
+        lastPos = func.position;
+    }
+    
+    if (p->cur_token.type != TOKEN_END) {
+        const char *message = "missing \"end\" to signal end of function";
+        output_miss_end(p, &func.position, message, strlen(message));
+    }
+    else {
+        parser_consume(p);
+    }
+    
+    FunctionExpression functionExpression;
+    functionExpression.position = position_from_to(&func.position, &lastPos);
+    functionExpression.parameters = parameterHead.next;
+    functionExpression.statements = statementHead.next;
+    return functionExpression;
 }
 
 Expression binary_expression_parse(Parser *p, Expression left) {
@@ -103,6 +163,21 @@ Expression binary_expression_parse(Parser *p, Expression left) {
 
 Expression internal_expression_parse(Parser *p) {
     Token token = p->cur_token;
+
+    if (token.type == TOKEN_OPEN_PAREN) {
+        parser_consume(p);
+
+        Expression exp = expression_parse(p);
+
+        if (p->cur_token.type != TOKEN_CLOSE_PAREN) {
+            output_miss_close_paren(p, &token.position, "", 0);
+        }
+        else {
+            parser_consume(p);
+        }
+
+        return exp;
+    }
     
     if (token.type == TOKEN_SYMBOL) {
         Expression exp;
@@ -118,23 +193,39 @@ Expression internal_expression_parse(Parser *p) {
         
         return exp;
     }
-    
-    if (token.type == TOKEN_OPEN_PAREN) {
+ 
+    // literals
+    if (token.type == TOKEN_NUMBER) {
         parser_consume(p);
         
-        Expression exp = expression_parse(p);
+        Expression exp;
         
-        if (p->cur_token.type != TOKEN_CLOSE_PAREN) {
-            output_miss_close_paren(p, &token.position, "", 0);
-        }
-        else {
-            parser_consume(p);
-        }
+        LiteralNumberExpression numberLiteral;
+        numberLiteral.parent = &exp;
+        numberLiteral.value = strtod(token.text, NULL);
         
+        exp.position = token.position;
+        exp.type = EXPRESSION_LITERAL_NUMBER;
+        exp.value = &numberLiteral;
+        return exp;
+    }
+    if (token.type == TOKEN_STRING) {
+        parser_consume(p);
+
+        Expression exp;
+
+        LiteralStringExpression strLiteral;
+        strLiteral.parent = &exp;
+        strLiteral.value = token.text;
+        strLiteral.value_len = token.text_len;
+        
+        exp.position = token.position;
+        exp.type = EXPRESSION_LITERAL_STRING;
+        exp.value = &strLiteral;
         return exp;
     }
     
-    //TODO: finish
+    return expression_empty();
 }
 
 Expression expression_chain_parse(Parser *p, Expression first) {

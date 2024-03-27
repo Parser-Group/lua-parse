@@ -15,10 +15,14 @@ typedef enum {
 
     OUTPUT_MISS_SYMBOL,
     OUTPUT_MISS_EXPRESSION,
+    OUTPUT_MISS_END,
 
+    OUTPUT_UNEXPECTED_TOKEN,
     OUTPUT_UNEXPECTED_KEYWORD,
     
 } OutputCode;
+
+const char* outputCode_to_string(OutputCode code);
 
 typedef struct {
     Lexer *lexer;

@@ -7,6 +7,9 @@
 typedef enum {
     EXPRESSION_NONE = 0,
 
+    EXPRESSION_LITERAL_NUMBER,
+    EXPRESSION_LITERAL_STRING,
+    
     EXPRESSION_VARIABLE,
     EXPRESSION_VARIABLE_INDEX,
     EXPRESSION_VARIABLE_NAME_INDEX,
@@ -20,8 +23,24 @@ typedef struct {
     void *value;
 } Expression;
 
-//NOTE: modify numbers to be smaller for smaller memory consumption
-// are the same numbers as TokenType for performance
+typedef enum {
+    LITERAL_NONE = 0,
+    LITERAL_NUMBER,
+    LITERAL_STRING
+} LiteralType;
+
+typedef struct {
+    Expression *parent;
+    double value; 
+} LiteralNumberExpression;
+
+typedef struct {
+    Expression *parent;
+    const char* value;
+    size_t value_len;
+} LiteralStringExpression;
+
+//NOTE: values are the same as TokenType for performance
 typedef enum {
     BINARY_EXPRESSION_NONE = 0,
     
@@ -75,6 +94,7 @@ typedef struct {
 } VariableIndexExpression;
 
 typedef struct {
+    Position position;
     const char *text;
     size_t text_len;
 } FunctionParameter;
@@ -84,11 +104,8 @@ typedef struct FunctionParameterNode {
     FunctionParameter *value;
 } FunctionParameterNode;
 
-
 typedef struct {
     Position position;
-    const char *text;
-    int text_len;
     FunctionParameterNode *parameters;
     StatementNode *statements;
 } FunctionExpression;

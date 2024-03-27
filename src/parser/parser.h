@@ -6,7 +6,7 @@
 #include "statement.h"
 #include "statement_structs.h"
 
-Parser parser_new(Lexer *l);
+Parser parser_new(Lexer *l, void (*onOutput) (Position *position, OutputCode code, const char *message, size_t message_len));
 void parser_consume(Parser *p);
 
 Statement parser_next(Parser *p);

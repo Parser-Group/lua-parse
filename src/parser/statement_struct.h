@@ -8,7 +8,7 @@ typedef enum {
 
     STATEMENT_LOCAL,
     STATEMENT_FUNCTION,
-    STATEMENT_VARIABLE_ASSIGNMENT,
+    STATEMENT_DECLARATION_ASSIGNMENT,
 } StatementType;
 
 typedef struct {

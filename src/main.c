@@ -4,6 +4,13 @@
 #include <string.h>
 
 #include "lexer/lexer.h"
+#include "parser/statement.h"
+
+void printOutput(Position *pos, OutputCode code, const char *message, size_t message_len) {
+    char *positionStr = position_to_string(pos);
+    printf("%s -> %s: %.*s\n", positionStr, outputCode_to_string(code), (int)message_len, message);
+    free(positionStr);
+}
 
 int main() {
     char *content;
@@ -43,12 +50,12 @@ int main() {
 //    }
 
     Lexer l = lexer_new(content, content_len);
-    Token t;
+    Parser p = parser_new(&l, printOutput);
     
     int start = clock();
     
-    t = lexer_next(&l);
-    while (t.type != TOKEN_END) {
+    Statement statement = parser_next(&p);
+    while (statement.type != STATEMENT_NONE) {
 //        printf("'%.*s' (%s)<%zu:%zu-%zu:%zu>\n",
 //               (int)t.text_len,
 //               t.text,
@@ -56,7 +63,7 @@ int main() {
 //               t.position.start_line, t.position.start_column,
 //               t.position.end_line, t.position.end_column);
 
-        t = lexer_next(&l);
+        statement = parser_next(&p);
     }
 
     int end = clock();

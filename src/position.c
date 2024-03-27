@@ -9,8 +9,15 @@ Position position_from_to(Position *start, Position *end) {
     return pos;
 }
 
-const char* position_to_string(Position *pos) {
-    char *str = "";
-    sprintf(str, "<%zu:%zu-%zu:%zu>", pos->start_line, pos->start_column, pos->end_line, pos->end_column);
-    return str;
+/// string needs to be freed
+char* position_to_string(Position *pos) {
+    int size = snprintf(NULL, 0, "<%zu:%zu-%zu:%zu>", pos->start_line, pos->start_column, pos->end_line, pos->end_column) + 1;
+    char *buffer = malloc(size);
+    
+    if (buffer == NULL) {
+        return NULL;
+    }
+    
+    snprintf(buffer, size, "<%zu:%zu-%zu:%zu>", pos->start_line, pos->start_column, pos->end_line, pos->end_column);
+    return buffer;
 }
