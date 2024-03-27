@@ -3,19 +3,19 @@
 #include "utils.h"
 #include "output.h"
 
-Statement* statement_new() {
+Statement *statement_new() {
     Statement *statement = malloc(sizeof(Statement));
     statement->type = STATEMENT_NONE;
     return statement;
 }
 
-Statement* statement_empty() {
+Statement *statement_empty() {
     Statement *statement = malloc(sizeof(Statement));
     statement->type = STATEMENT_NONE;
     return statement;
 }
 
-Statement* local_statement_parse(Parser *p) {
+Statement *local_statement_parse(Parser *p) {
     if (token_is_keyword("function", &p->cur_token)) {
         Token func = p->cur_token;
         parser_consume(p);
@@ -91,7 +91,7 @@ bool is_end_of_if_body(Token *token) {
     return token_is_keyword("end", token) || token_is_keyword("elseif", token) || token_is_keyword("else", token);
 }
 
-Statement* statement_parse(Parser *p) {
+Statement *statement_parse(Parser *p) {
     Token token = p->cur_token;
 
     Expression exp = expression_parse(p);
@@ -189,26 +189,23 @@ Statement* statement_parse(Parser *p) {
 
         StatementNode *ifBodyStatements = statement_parse_body(p, is_end_of_if_body);
 
-        StatementNodeNode *elseIfBodyStatementsHead;
-        StatementNodeNode *elseBodyStatementsHead;
+        ElseIfStatementNode *elseIfBodyStatementsHead = malloc(sizeof(ElseIfStatementNode));
+        elseIfBodyStatementsHead->next = nullptr;
+        elseIfBodyStatementsHead->value = nullptr;
+        ElseStatementNode *elseBodyStatementsHead = malloc(sizeof(ElseStatementNode));
+        elseBodyStatementsHead->next = nullptr;
+        elseBodyStatementsHead->value = nullptr;
         {
-
-            elseIfBodyStatementsHead = malloc(sizeof(StatementNodeNode));
-            StatementNodeNode *elseIfBodyStatements = elseIfBodyStatementsHead;
-            elseIfBodyStatementsHead->next = nullptr;
-            elseIfBodyStatementsHead->value = nullptr;
-            elseBodyStatementsHead = malloc(sizeof(StatementNodeNode));
-            StatementNodeNode *elseBodyStatements = elseBodyStatementsHead;
-            elseBodyStatementsHead->next = nullptr;
-            elseBodyStatementsHead->value = nullptr;
+            ElseIfStatementNode *elseIfBodyStatements = elseIfBodyStatementsHead;
+            ElseStatementNode *elseBodyStatements = elseBodyStatementsHead;
 
             while (true) {
                 Token elseToken = p->cur_token;
                 if (token_is_keyword("elseif", &elseToken)) {
                     parser_consume(p);
-                    
-                    Expression elseIfExp = expression_parse(p);
-                    if (elseIfExp.type == EXPRESSION_NONE) {
+
+                    Expression elseIfCondition = expression_parse(p);
+                    if (elseIfCondition.type == EXPRESSION_NONE) {
                         const char *message = "missing condition for elseif";
                         output_miss_expression(p, &elseToken.position, message, strlen(message));
                     }
@@ -219,9 +216,13 @@ Statement* statement_parse(Parser *p) {
                     } else {
                         parser_consume(p);
                     }
+
+                    ElseIfStatement *elseIfStatement = malloc(sizeof(ElseIfStatement));
+                    elseIfStatement->statements = statement_parse_body(p, is_end_of_if_body);
+                    elseIfStatement->condition = elseIfCondition;
                     
-                    StatementNodeNode *node = malloc(sizeof(StatementNodeNode));
-                    node->value = statement_parse_body(p, is_end_of_if_body);
+                    ElseIfStatementNode *node = malloc(sizeof(ElseIfStatementNode));
+                    node->value = elseIfStatement;
                     node->next = nullptr;
 
                     elseIfBodyStatements->next = node;
@@ -231,9 +232,12 @@ Statement* statement_parse(Parser *p) {
 
                 if (token_is_keyword("else", &elseToken)) {
                     parser_consume(p);
+
+                    ElseStatement *elseStatement = malloc(sizeof(ElseStatement));
+                    elseStatement->statements = statement_parse_body(p, is_end_of_if_body);
                     
-                    StatementNodeNode *node = malloc(sizeof(StatementNodeNode));
-                    node->value = statement_parse_body(p, is_end_of_if_body);
+                    ElseStatementNode *node = malloc(sizeof(ElseStatementNode));
+                    node->value = elseStatement;
                     node->next = nullptr;
 
                     elseBodyStatements->next = node;
@@ -260,11 +264,11 @@ Statement* statement_parse(Parser *p) {
         _ifStatement.condition = condition;
         _ifStatement.if_body = ifBodyStatements;
         //TODO: finish else and else if statements
-//        _ifStatement.else_if_body_nodes = elseIfBodyStatementsHead->next;
-//        free(elseIfBodyStatementsHead);
-//        _ifStatement.else_body_nodes = elseBodyStatements;
-//        free(elseBodyStatementsHead);
-        
+        //        _ifStatement.else_if_body_nodes = elseIfBodyStatementsHead->next;
+        //        free(elseIfBodyStatementsHead);
+        //        _ifStatement.else_body_nodes = elseBodyStatementsHead->next;
+        //        free(elseBodyStatementsHead);
+
         statement->type = STATEMENT_IF;
         statement->value = &_ifStatement;
         statement->position = position_from_to(&_if.position, &end.position);
