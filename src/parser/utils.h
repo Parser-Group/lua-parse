@@ -3,6 +3,6 @@
 
 #include "token.h"
 
-bool keyword_is(const char* keyword, Token token);
+bool token_is_keyword(const char *keyword, Token *token);
 
 #endif //LUA_PARSER_UTILS_H

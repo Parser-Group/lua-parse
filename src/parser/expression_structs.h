@@ -7,14 +7,19 @@
 typedef enum {
     EXPRESSION_NONE = 0,
 
+    EXPRESSION_PRIORITY,
+    
     EXPRESSION_LITERAL_NUMBER,
     EXPRESSION_LITERAL_STRING,
     
     EXPRESSION_VARIABLE,
     EXPRESSION_VARIABLE_INDEX,
     EXPRESSION_VARIABLE_NAME_INDEX,
+    EXPRESSION_VARIABLE_NAME_INDEX_WITH_SELF,
     
     EXPRESSION_BINARY,
+    EXPRESSION_FUNCTION,
+    EXPRESSION_FUNCTION_CALL,
 } ExpressionType;
 
 typedef struct {
@@ -23,11 +28,15 @@ typedef struct {
     void *value;
 } Expression;
 
-typedef enum {
-    LITERAL_NONE = 0,
-    LITERAL_NUMBER,
-    LITERAL_STRING
-} LiteralType;
+typedef struct ExpressionNode {
+    struct ExpressionNode *next;
+    Expression value;
+} ExpressionNode;
+
+typedef struct {
+    Expression *parent;
+    Expression value;
+} PriorityExpression;
 
 typedef struct {
     Expression *parent;
@@ -90,6 +99,13 @@ typedef struct {
 typedef struct {
     Expression *parent;
     Expression *first;
+    const char *index;
+    size_t index_len;
+} VariableNameIndexWithSelfExpression;
+
+typedef struct {
+    Expression *parent;
+    Expression *first;
     Expression index;
 } VariableIndexExpression;
 
@@ -105,9 +121,16 @@ typedef struct FunctionParameterNode {
 } FunctionParameterNode;
 
 typedef struct {
+    Expression *parent;
     Position position;
     FunctionParameterNode *parameters;
     StatementNode *statements;
 } FunctionExpression;
+
+typedef struct {
+    Expression *parent;
+    ExpressionNode *arguments;
+    Expression index;
+} FunctionCallExpression;
 
 #endif //LUA_PARSER_EXPRESSION_STRUCTS_H

@@ -17,6 +17,4 @@
         exit(1);                                                              \
     } while(0)
 
-#define UNUSED(x) (void)(x)
-
 #endif //LUA_PARSER_COMMON_H

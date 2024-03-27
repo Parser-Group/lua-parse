@@ -88,13 +88,20 @@ const char *token_type_name(TokenType type) {
             return "modulo";
         case TOKEN_LENGTH:
             return "hash";
-
             
         default:
             UNREACHABLE("token_type_name");
     }
 }
 
-bool token_is_keyword(const char *text, Token *token) {
-    return token->type == TOKEN_KEYWORD && memcmp(text, token->text, token->text_len) == 0;
+char *token_to_string(Token *token) {
+    int size = snprintf(NULL, 0, "%.*s \'%s\'", (int)token->text_len, token->text, token_type_name(token->type)) + 1;
+    char *buffer = malloc(size);
+    
+    if (buffer == NULL) {
+        return NULL;
+    }
+
+    sprintf(buffer, "%.*s \'%s\'", (int)token->text_len, token->text, token_type_name(token->type));
+    return buffer;
 }

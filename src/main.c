@@ -55,7 +55,7 @@ int main() {
     int start = clock();
     
     Statement statement = parser_next(&p);
-    while (statement.type != STATEMENT_NONE) {
+    while (statement.type != STATEMENT_END) {
 //        printf("'%.*s' (%s)<%zu:%zu-%zu:%zu>\n",
 //               (int)t.text_len,
 //               t.text,

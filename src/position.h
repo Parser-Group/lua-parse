@@ -11,6 +11,7 @@ typedef struct {
 } Position;
 
 Position position_from_to(Position *start, Position *end);
+Position position_after(Position *pos);
 char* position_to_string(Position *pos);
 
 #endif //LUA_PARSER_POSITION_H

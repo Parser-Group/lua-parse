@@ -64,6 +64,6 @@ typedef struct Token {
     size_t text_len;
 } Token;
 
-bool token_is_keyword(const char *keyword, Token *token);
+char *token_to_string(Token *token);
 
 #endif //LUA_PARSER_TOKEN_H
