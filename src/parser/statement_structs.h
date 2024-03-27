@@ -13,7 +13,7 @@ typedef struct {
 
 typedef struct {
     Statement *parent;
-    Statement child;
+    Statement *child;
 } LocalStatement;
 
 typedef struct {
@@ -38,9 +38,30 @@ typedef struct {
 } VariableAssignmentStatement;
 
 typedef struct {
-    Statement *parent;
     Expression condition;
     StatementNode *statements;
+} ElseIfStatement;
+
+typedef struct {
+    StatementNode *statements;
+} ElseStatement;
+
+typedef struct ElseIfStatementNode {
+    struct ElseIfStatementNode *next;
+    ElseIfStatement *value;
+} ElseIfStatementNode;
+
+typedef struct ElseStatementNode {
+    struct ElseStatementNode *next;
+    ElseStatement *value;
+} ElseStatementNode;
+
+typedef struct {
+    Statement *parent;
+    Expression condition;
+    StatementNode *if_body;
+    ElseIfStatementNode *else_if_body_nodes;
+    ElseStatementNode *else_body_nodes;
 } IfStatement;
 
 #endif //LUA_PARSER_STATEMENT_STRUCTS_H

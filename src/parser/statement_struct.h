@@ -27,4 +27,9 @@ typedef struct StatementNode {
     Statement *value;
 } StatementNode;
 
+typedef struct StatementNodeNode {
+    struct StatementNodeNode *next;
+    StatementNode *value;
+} StatementNodeNode;
+
 #endif //LUA_PARSER_STATEMENT_STRUCT_H

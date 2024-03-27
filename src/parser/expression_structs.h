@@ -30,7 +30,7 @@ typedef struct {
 
 typedef struct ExpressionNode {
     struct ExpressionNode *next;
-    Expression value;
+    Expression *value;
 } ExpressionNode;
 
 typedef struct {

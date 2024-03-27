@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <time.h>
-#include <string.h>
 
 #include "lexer/lexer.h"
 #include "parser/statement.h"
@@ -54,8 +53,8 @@ int main() {
     
     int start = clock();
     
-    Statement statement = parser_next(&p);
-    while (statement.type != STATEMENT_END) {
+    Statement *statement = parser_next(&p);
+    while (statement->type != STATEMENT_END) {
 //        printf("'%.*s' (%s)<%zu:%zu-%zu:%zu>\n",
 //               (int)t.text_len,
 //               t.text,
@@ -63,6 +62,7 @@ int main() {
 //               t.position.start_line, t.position.start_column,
 //               t.position.end_line, t.position.end_column);
 
+        free(statement);
         statement = parser_next(&p);
     }
 

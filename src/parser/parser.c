@@ -17,6 +17,6 @@ void parser_consume(Parser *p) {
     p->cur_token = next;
 }
 
-Statement parser_next(Parser *p) {
+Statement* parser_next(Parser *p) {
     return statement_parse(p);
 }

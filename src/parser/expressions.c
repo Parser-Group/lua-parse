@@ -21,7 +21,6 @@ FunctionParameter function_parameter_parse(Parser *p) {
     parameter.position = p->cur_token.position;
     parameter.text = p->cur_token.text;
     parameter.text_len = p->cur_token.text_len;
-    
     return parameter;
 }
 
@@ -35,17 +34,19 @@ Expression function_expression_parse(Parser *p, Token func) {
         parser_consume(p);
     }
     
-    FunctionParameterNode parameterHead = {0};
-    FunctionParameterNode parameterCurrent = parameterHead;
+    FunctionParameterNode *parameterHead = malloc(sizeof(FunctionParameterNode));
+    parameterHead->value = nullptr;
+    FunctionParameterNode *parameterCurrent = parameterHead;
     Position lastPos = {0};
     while (true) {
         if (p->cur_token.type == TOKEN_SYMBOL || p->cur_token.type == TOKEN_KEYWORD) {
             FunctionParameter parameter = function_parameter_parse(p);
 
-            FunctionParameterNode node;
-            node.value = &parameter;
+            FunctionParameterNode *node = malloc(sizeof(FunctionParameterNode));
+            node->value = &parameter;
+            node->next = nullptr;
 
-            parameterCurrent.next = &node;
+            parameterCurrent->next = node;
             parameterCurrent = node;
             parser_consume(p);
         }
@@ -71,34 +72,39 @@ Expression function_expression_parse(Parser *p, Token func) {
         parser_consume(p);
     }
     
-    StatementNode statementHead = {0};
-    StatementNode statementCurrent = statementHead;
+    StatementNode *statementHead = malloc(sizeof(StatementNode));
+    statementHead->value = nullptr;
+    StatementNode *statementCurrent = statementHead;
     while (true) {
         if (token_is_keyword("end", &p->cur_token) || p->cur_token.type == TOKEN_END) {
             break;    
         }
         
-        Statement statement = statement_parse(p);
-        if (statement.type != STATEMENT_NONE) {
-            StatementNode node;
-            node.value = &statement;
+        Statement *statement = statement_parse(p);
+        if (statement->type != STATEMENT_NONE) {
+            StatementNode *node = malloc(sizeof(StatementNode));
+            node->value = statement;
+            node->next = nullptr;
             
-            statementCurrent.next = &node;
+            statementCurrent->next = node;
             statementCurrent = node;
+        }
+        else {
+            free(statement);
         }
     }
     
     if (token_is_keyword("end", &p->cur_token)) {
         lastPos = p->cur_token.position;
     }
-    else if (statementCurrent.value != NULL) {
-        lastPos = statementCurrent.value->position;
+    else if (statementCurrent->value != nullptr) {
+        lastPos = statementCurrent->value->position;
     }
     else if (closeParen.type == TOKEN_CLOSE_PAREN) {
         lastPos = closeParen.position;
     }
-    else if (parameterCurrent.value != NULL) {
-        lastPos = parameterCurrent.value->position;
+    else if (parameterCurrent->value != nullptr) {
+        lastPos = parameterCurrent->value->position;
     }
     else if (openParen.type == TOKEN_OPEN_PAREN) {
         lastPos = openParen.position;
@@ -120,8 +126,10 @@ Expression function_expression_parse(Parser *p, Token func) {
     FunctionExpression functionExpression;
     functionExpression.parent = &exp;
     functionExpression.position = position_from_to(&func.position, &lastPos);
-    functionExpression.parameters = parameterHead.next;
-    functionExpression.statements = statementHead.next;
+    functionExpression.parameters = parameterHead->next;
+    free(parameterHead);
+    functionExpression.statements = statementHead->next;
+    free(statementHead);
     
     exp.type = EXPRESSION_FUNCTION;
     exp.value = &functionExpression;
@@ -345,15 +353,15 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         parser_consume(p);
         
         ExpressionNode *expressionHead = malloc(sizeof(ExpressionNode));
-        expressionHead->value = (Expression){0};
+        expressionHead->value = nullptr;
         ExpressionNode *expressionCurrent = expressionHead;
         Position lastPos = {0};
         while (true) {
             Expression expValue = expression_parse(p);
             if (expValue.type != EXPRESSION_NONE) {
                 ExpressionNode *expNode = malloc(sizeof(ExpressionNode));
-                expNode->value = expValue;
-                expNode->next = NULL;
+                expNode->value = &expValue;
+                expNode->next = nullptr;
                 
                 expressionCurrent->next = expNode;
                 expressionCurrent = expNode;
@@ -385,6 +393,7 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         FunctionCallExpression functionCallExpression;
         functionCallExpression.parent = &expression;
         functionCallExpression.arguments = expressionHead->next;
+        free(expressionHead);
         functionCallExpression.index = first;
         
         expression.type = EXPRESSION_FUNCTION_CALL;
