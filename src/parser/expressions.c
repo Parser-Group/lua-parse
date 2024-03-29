@@ -19,8 +19,7 @@ FunctionParameter function_parameter_parse(Parser *p) {
     
     FunctionParameter parameter;
     parameter.position = p->cur_token.position;
-    parameter.text = p->cur_token.text;
-    parameter.text_len = p->cur_token.text_len;
+    parameter.name = symbol_from_token(&p->cur_token);
     return parameter;
 }
 
@@ -35,6 +34,10 @@ Expression function_expression_parse(Parser *p, Token func) {
     }
     
     FunctionParameterNode *parameterHead = malloc(sizeof(FunctionParameterNode));
+    if (parameterHead == nullptr) {
+        UNIMPLEMENTED("function_expression_parse");
+    }
+    
     parameterHead->value = nullptr;
     FunctionParameterNode *parameterCurrent = parameterHead;
     Position lastPos = {0};
@@ -43,6 +46,10 @@ Expression function_expression_parse(Parser *p, Token func) {
             FunctionParameter parameter = function_parameter_parse(p);
 
             FunctionParameterNode *node = malloc(sizeof(FunctionParameterNode));
+            if (node == nullptr) {
+                UNIMPLEMENTED("function_expression_parse");
+            }
+            
             node->value = &parameter;
             node->next = nullptr;
 
@@ -73,6 +80,10 @@ Expression function_expression_parse(Parser *p, Token func) {
     }
     
     StatementNode *statementHead = malloc(sizeof(StatementNode));
+    if (statementHead == nullptr) {
+        UNIMPLEMENTED("function_expression_parse");
+    }
+    
     statementHead->value = nullptr;
     StatementNode *statementCurrent = statementHead;
     while (true) {
@@ -83,6 +94,10 @@ Expression function_expression_parse(Parser *p, Token func) {
         Statement *statement = statement_parse(p);
         if (statement->type != STATEMENT_NONE) {
             StatementNode *node = malloc(sizeof(StatementNode));
+            if (node == nullptr) {
+                UNIMPLEMENTED("function_expression_parse");
+            }
+            
             node->value = statement;
             node->next = nullptr;
             
@@ -222,8 +237,7 @@ Expression internal_expression_parse(Parser *p) {
         Expression exp;
         
         VariableExpression varExp;
-        varExp.text = token.text;
-        varExp.text_len = token.text_len;
+        varExp.symbol = symbol_from_token(&token);
         varExp.parent = &exp;
         
         exp.type = EXPRESSION_VARIABLE;
@@ -310,8 +324,7 @@ Expression expression_chain_parse(Parser *p, Expression first) {
             VariableNameIndexExpression varExp;
             varExp.parent = &exp;
             varExp.first = &first;
-            varExp.index = p->cur_token.text;
-            varExp.index_len = p->cur_token.text_len;
+            varExp.index = symbol_from_token(&p->cur_token);
         
             exp.type = EXPRESSION_VARIABLE_NAME_INDEX;
             exp.position = position_from_to(&first.position, &p->cur_token.position);
@@ -333,8 +346,7 @@ Expression expression_chain_parse(Parser *p, Expression first) {
             VariableNameIndexWithSelfExpression varExp;
             varExp.parent = &exp;
             varExp.first = &first;
-            varExp.index = p->cur_token.text;
-            varExp.index_len = p->cur_token.text_len;
+            varExp.index = symbol_from_token(&p->cur_token);
 
             exp.type = EXPRESSION_VARIABLE_NAME_INDEX_WITH_SELF;
             exp.position = position_from_to(&first.position, &p->cur_token.position);
@@ -353,18 +365,26 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         parser_consume(p);
         
         ExpressionNode *expressionHead = malloc(sizeof(ExpressionNode));
+        if (expressionHead == nullptr) {
+            UNIMPLEMENTED("expression_chain_parse");
+        }
+        
         expressionHead->value = nullptr;
         ExpressionNode *expressionCurrent = expressionHead;
         Position lastPos = {0};
         while (true) {
             Expression expValue = expression_parse(p);
             if (expValue.type != EXPRESSION_NONE) {
-                ExpressionNode *expNode = malloc(sizeof(ExpressionNode));
-                expNode->value = &expValue;
-                expNode->next = nullptr;
+                ExpressionNode *node = malloc(sizeof(ExpressionNode));
+                if (node == nullptr) {
+                    UNIMPLEMENTED("expression_chain_parse");
+                }
+
+                node->value = &expValue;
+                node->next = nullptr;
                 
-                expressionCurrent->next = expNode;
-                expressionCurrent = expNode;
+                expressionCurrent->next = node;
+                expressionCurrent = node;
             }
             else if (lastPos.start_line != 0) {
                 const char *message = "missing expression as function argument";

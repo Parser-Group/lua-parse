@@ -11,6 +11,12 @@
         exit(1);                                                                \
     } while(0)
 
+#define SOFT_UNIMPLEMENTED(...)                                             \
+    printf("%s:%d: UNIMPLEMENTED: %s \n", __FILE__, __LINE__, __VA_ARGS__);
+
+#define UNFINISHED(...)                                                     \
+    printf("%s:%d: UNFINISHED: %s \n", __FILE__, __LINE__, __VA_ARGS__);
+
 #define UNREACHABLE(...)                                                      \
     do {                                                                      \
         printf("%s:%d: UNREACHABLE: %s \n", __FILE__, __LINE__, __VA_ARGS__); \

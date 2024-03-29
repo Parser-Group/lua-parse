@@ -14,6 +14,8 @@ typedef enum {
     STATEMENT_ASSIGNMENT,
 
     STATEMENT_IF,
+    STATEMENT_FOR_NUMERIC,
+    STATEMENT_FOR_GENERIC,
 } StatementType;
 
 typedef struct {

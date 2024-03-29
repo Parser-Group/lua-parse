@@ -5,12 +5,20 @@
 
 Statement *statement_new() {
     Statement *statement = malloc(sizeof(Statement));
+    if (statement == nullptr) {
+        UNIMPLEMENTED("statement_new");
+    }
+
     statement->type = STATEMENT_NONE;
     return statement;
 }
 
 Statement *statement_empty() {
     Statement *statement = malloc(sizeof(Statement));
+    if (statement == nullptr) {
+        UNIMPLEMENTED("statement_empty");
+    }
+
     statement->type = STATEMENT_NONE;
     return statement;
 }
@@ -33,8 +41,7 @@ Statement *local_statement_parse(Parser *p) {
         FunctionDeclaration functionDeclaration;
         functionDeclaration.parent = statement;
         functionDeclaration.expression = function_expression_parse(p, func);
-        functionDeclaration.symbol = funcName.text;
-        functionDeclaration.symbol_len = funcName.text_len;
+        functionDeclaration.symbol = symbol_from_token(&funcName);
 
         statement->type = STATEMENT_FUNCTION_DECLARATION;
         statement->value = &functionDeclaration;
@@ -53,8 +60,7 @@ Statement *local_statement_parse(Parser *p) {
             VariableDeclaration variableDeclaration;
             variableDeclaration.parent = statement;
             variableDeclaration.initializer = nullptr;
-            variableDeclaration.symbol = symbol.text;
-            variableDeclaration.symbol_len = symbol.text_len;
+            variableDeclaration.symbol = symbol_from_token(&symbol);
 
             statement->position = symbol.position;
             statement->type = STATEMENT_VARIABLE_DECLARATION;
@@ -75,8 +81,7 @@ Statement *local_statement_parse(Parser *p) {
         VariableDeclaration variableDeclaration;
         variableDeclaration.parent = statement;
         variableDeclaration.initializer = &initializer;
-        variableDeclaration.symbol = symbol.text;
-        variableDeclaration.symbol_len = symbol.text_len;
+        variableDeclaration.symbol = symbol_from_token(&symbol);
 
         statement->position = position_from_to(&symbol.position, &initializer.position);
         statement->type = STATEMENT_VARIABLE_DECLARATION;
@@ -91,7 +96,316 @@ bool is_end_of_if_body(Token *token) {
     return token_is_keyword("end", token) || token_is_keyword("elseif", token) || token_is_keyword("else", token);
 }
 
-Statement *statement_parse(Parser *p) {
+Statement* if_statement_parse(Parser *p, Token *_if) {
+    Expression condition = expression_parse(p);
+    if (condition.type == EXPRESSION_NONE) {
+        const char *message = "missing if condition";
+        output_miss_expression(p, &_if->position, message, strlen(message));
+    }
+
+    if (!token_is_keyword("then", &p->cur_token)) {
+        const char *message = "missing \"then\" after condition";
+        Position pos = position_after(&condition.position);
+        output_miss_keyword_then(p, &pos, message, strlen(message));
+    } else {
+        parser_consume(p);
+    }
+
+    StatementNode *ifBodyStatements = statement_parse_body(p, is_end_of_if_body);
+
+    ElseIfStatementNode *elseIfBodyStatementsHead = malloc(sizeof(ElseIfStatementNode));
+    if (elseIfBodyStatementsHead == nullptr) {
+        UNIMPLEMENTED("statement_parse");
+    }
+
+    elseIfBodyStatementsHead->next = nullptr;
+    elseIfBodyStatementsHead->value = nullptr;
+    ElseStatementNode *elseBodyStatementsHead = malloc(sizeof(ElseStatementNode));
+    if (elseBodyStatementsHead == nullptr) {
+        UNIMPLEMENTED("statement_parse");
+    }
+
+    elseBodyStatementsHead->next = nullptr;
+    elseBodyStatementsHead->value = nullptr;
+    {
+        ElseIfStatementNode *elseIfBodyStatements = elseIfBodyStatementsHead;
+        ElseStatementNode *elseBodyStatements = elseBodyStatementsHead;
+
+        while (true) {
+            Token elseToken = p->cur_token;
+            if (token_is_keyword("elseif", &elseToken)) {
+                parser_consume(p);
+
+                Expression elseIfCondition = expression_parse(p);
+                if (elseIfCondition.type == EXPRESSION_NONE) {
+                    const char *message = "missing condition for elseif";
+                    output_miss_expression(p, &elseToken.position, message, strlen(message));
+                }
+
+                if (!token_is_keyword("then", &p->cur_token)) {
+                    const char *message = "missing \"then\" keyword after elseif condition";
+                    output_miss_expression(p, &elseToken.position, message, strlen(message));
+                } else {
+                    parser_consume(p);
+                }
+
+                ElseIfStatement *elseIfStatement = malloc(sizeof(ElseIfStatement));
+                if (elseIfStatement == nullptr) {
+                    UNIMPLEMENTED("statement_parse");
+                }
+
+                elseIfStatement->statements = statement_parse_body(p, is_end_of_if_body);
+                elseIfStatement->condition = elseIfCondition;
+
+                ElseIfStatementNode *node = malloc(sizeof(ElseIfStatementNode));
+                if (node == nullptr) {
+                    UNIMPLEMENTED("statement_parse");
+                }
+
+                node->value = elseIfStatement;
+                node->next = nullptr;
+
+                elseIfBodyStatements->next = node;
+                elseIfBodyStatements = node;
+                continue;
+            }
+
+            if (token_is_keyword("else", &elseToken)) {
+                parser_consume(p);
+
+                ElseStatement *elseStatement = malloc(sizeof(ElseStatement));
+                if (elseStatement == nullptr) {
+                    UNIMPLEMENTED("statement_parse");
+                }
+
+                elseStatement->statements = statement_parse_body(p, is_end_of_if_body);
+
+                ElseStatementNode *node = malloc(sizeof(ElseStatementNode));
+                if (node == nullptr) {
+                    UNIMPLEMENTED("statement_parse");
+                }
+
+                node->value = elseStatement;
+                node->next = nullptr;
+
+                elseBodyStatements->next = node;
+                elseBodyStatements = node;
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    Token end = p->cur_token;
+    if (!token_is_keyword("end", &p->cur_token)) {
+        const char *message = "missing \"end\" of if statement";
+        output_miss_keyword_end(p, &_if->position, message, strlen(message));
+    } else {
+        parser_consume(p);
+    }
+
+    Statement *statement = statement_new();
+
+    IfStatement _ifStatement;
+    _ifStatement.parent = statement;
+    _ifStatement.condition = condition;
+    _ifStatement.if_body = ifBodyStatements;
+    _ifStatement.else_if_body_nodes = elseIfBodyStatementsHead->next;
+    free(elseIfBodyStatementsHead);
+    _ifStatement.else_body_nodes = elseBodyStatementsHead->next;
+    free(elseBodyStatementsHead);
+
+    statement->type = STATEMENT_IF;
+    statement->value = &_ifStatement;
+    statement->position = position_from_to(&_if->position, &end.position);
+    return statement;
+}
+
+bool is_end_of_for_body(Token *token) {
+    return token_is_keyword("end", token);
+}
+
+Statement* for_generic_statement_parse(Parser *p, Token *_for, Symbol *symbol, Position lastPos) {
+    SymbolNode *symbolsHead = malloc(sizeof(SymbolNode));
+    if (symbolsHead == nullptr) {
+        UNIMPLEMENTED("for_generic_statement_parse");
+    }
+    symbolsHead->value = symbol;
+
+    SymbolNode *symbolsCurrent = symbolsHead;
+    while (p->cur_token.type == TOKEN_COMMA) {
+        Token comma = p->cur_token;
+        parser_consume(p);
+        
+        if (p->cur_token.type != TOKEN_SYMBOL) {
+            const char *message = "missing symbol";
+            output_miss_symbol(p, &comma.position, message, strlen(message));
+            
+            continue;
+        }
+        
+        Symbol *symbolValue = symbol_from_token(&p->cur_token);
+        parser_consume(p);
+        
+        SymbolNode *node = malloc(sizeof(SymbolNode));
+        if (node == nullptr) {
+            UNIMPLEMENTED("for_generic_statement_parse");
+        }
+        
+        node->value = symbolValue;
+        node->next = nullptr;
+        
+        symbolsCurrent->next = node;
+        symbolsCurrent = node;
+    }
+
+    Token in = p->cur_token;
+    if (!token_is_keyword("in", &in)) {
+        const char *message = "missing \"in\" keyword for generic for loop";
+        output_miss_keyword_in(p, &_for->position, message, strlen(message));
+    }
+    else {
+        parser_consume(p);
+    }
+    
+    Expression getIterator = expression_parse(p);
+    if (getIterator.type == EXPRESSION_NONE) {
+        const char *message = "missing get iterator expression";
+        output_miss_expression(p, &_for->position, message, strlen(message));
+    }
+    
+    Token _do = p->cur_token;
+    if (!token_is_keyword("do", &_do)) {
+        const char *message = "missing \"do\" keyword for generic for loop";
+        output_miss_keyword_do(p, &_for->position, message, strlen(message));
+    }
+    
+    StatementNode *statements = statement_parse_body(p, is_end_of_for_body);
+    
+    Token end = p->cur_token;
+    if (!token_is_keyword("end", &end)) {
+        const char *message = "missing \"end\" keyword to signal end of generic for loop";
+        output_miss_keyword_end(p, &_for->position, message, strlen(message));
+    }
+
+    UNIMPLEMENTED("for_generic_statement_parse");
+}
+
+Statement* for_statement_parse(Parser *p, Token *_for) {
+    Position lastPos = {0};
+    Token symbolToken = p->cur_token;
+    Symbol *symbol = symbol_empty();
+    if (symbolToken.type != TOKEN_SYMBOL) {
+        const char *message = "missing symbol for iterator";
+        output_miss_symbol(p, &_for->position, message, strlen(message));
+    }
+    else {
+        lastPos = symbolToken.position;
+        token_to_symbol(symbol, &symbolToken);
+        parser_consume(p);
+    }
+
+    if (p->cur_token.type != TOKEN_EQUAL) {
+        return for_generic_statement_parse(p, _for, symbol, lastPos);
+    } else {
+        lastPos = p->cur_token.position;
+        parser_consume(p);
+    }
+    
+    Expression iteratorInitializer = expression_parse(p);
+    if (iteratorInitializer.type == EXPRESSION_NONE) {
+        const char *message = "missing iterator initializer";
+        output_miss_expression(p, &_for->position, message, strlen(message));
+    }
+    else {
+        lastPos = iteratorInitializer.position;
+    }
+
+    Token comma_iterator_condition = p->cur_token;
+    if (comma_iterator_condition.type != TOKEN_COMMA) {
+        const char *message = "missing comma for iterator and condition separation";
+        output_miss_comma(p, &_for->position, message, strlen(message));
+    }
+    else {
+        lastPos = comma_iterator_condition.position;
+        parser_consume(p);
+    }
+    
+    Expression condition = expression_parse(p);
+    if (condition.type == EXPRESSION_NONE) {
+        const char *message = "missing condition";
+        output_miss_expression(p, &_for->position, message, strlen(message));
+    }
+    
+    Token comma_condition_increment = p->cur_token;
+    Expression increment = expression_empty();
+    if (comma_condition_increment.type == TOKEN_COMMA) {
+        lastPos = comma_condition_increment.position;
+        parser_consume(p);
+
+        increment = expression_parse(p);
+    }
+    else {
+        LiteralNumberExpression literalNumberExpression;
+        literalNumberExpression.parent = &increment;
+        literalNumberExpression.value = 1;
+        
+        increment.type = EXPRESSION_LITERAL_NUMBER;
+        increment.value = &literalNumberExpression;
+    }
+
+    Token _do = p->cur_token;
+    if (!token_is_keyword("do", &_do)) {
+        const char *message = "missing \"do\" keyword for numeric for loop";
+        output_miss_keyword_do(p, &_for->position, message, strlen(message));
+    }
+    else {
+        lastPos = _do.position;
+        parser_consume(p);
+    }
+    
+    StatementNode *statements = statement_parse_body(p, is_end_of_for_body);
+    StatementNode *currentStatement = statements;
+    while (currentStatement != nullptr) {
+        if (currentStatement->next != nullptr) {
+            continue;
+        }
+        
+        lastPos = currentStatement->value->position;
+        currentStatement = currentStatement->next;
+    }
+    
+    Token end = p->cur_token;
+    if (!token_is_keyword("end", &end)) {
+        const char *message = "missing \"end\" keyword for numeric for loop";
+        output_miss_keyword_end(p, &_for->position, message, strlen(message));
+    }
+    else {
+        lastPos = end.position;
+        parser_consume(p);
+    }
+    
+    Statement *statement = statement_new();
+    
+    ForNumericLoopStatement *forNumericLoopStatement = malloc(sizeof(ForNumericLoopStatement));
+    if (forNumericLoopStatement == nullptr) {
+        UNIMPLEMENTED("for_statement_parse");
+    }
+    
+    forNumericLoopStatement->parent = statement;
+    forNumericLoopStatement->symbol = symbol;
+    forNumericLoopStatement->initializer = iteratorInitializer;
+    forNumericLoopStatement->condition = condition;
+    forNumericLoopStatement->increment = increment;
+    
+    statement->type = STATEMENT_FOR_NUMERIC;
+    statement->value = forNumericLoopStatement;
+    statement->position = position_from_to(&_for->position, &lastPos);
+    return statement_empty();
+}
+
+Statement* statement_parse(Parser *p) {
     Token token = p->cur_token;
 
     Expression exp = expression_parse(p);
@@ -137,8 +451,7 @@ Statement *statement_parse(Parser *p) {
             VariableAssignmentStatement variableAssignmentStatement;
             variableAssignmentStatement.parent = statement;
             variableAssignmentStatement.expression = exp;
-            variableAssignmentStatement.symbol = token.text;
-            variableAssignmentStatement.symbol_len = token.text_len;
+            variableAssignmentStatement.symbol = symbol_from_token(&token);
 
             statement->type = STATEMENT_ASSIGNMENT;
             statement->value = &variableAssignmentStatement;
@@ -173,108 +486,16 @@ Statement *statement_parse(Parser *p) {
         Token _if = p->cur_token;
         parser_consume(p);
 
-        Expression condition = expression_parse(p);
-        if (condition.type == EXPRESSION_NONE) {
-            const char *message = "missing if condition";
-            output_miss_expression(p, &_if.position, message, strlen(message));
-        }
-
-        if (!token_is_keyword("then", &p->cur_token)) {
-            const char *message = "missing \"then\" after condition";
-            Position pos = position_after(&condition.position);
-            output_miss_keyword_then(p, &pos, message, strlen(message));
-        } else {
-            parser_consume(p);
-        }
-
-        StatementNode *ifBodyStatements = statement_parse_body(p, is_end_of_if_body);
-
-        ElseIfStatementNode *elseIfBodyStatementsHead = malloc(sizeof(ElseIfStatementNode));
-        elseIfBodyStatementsHead->next = nullptr;
-        elseIfBodyStatementsHead->value = nullptr;
-        ElseStatementNode *elseBodyStatementsHead = malloc(sizeof(ElseStatementNode));
-        elseBodyStatementsHead->next = nullptr;
-        elseBodyStatementsHead->value = nullptr;
-        {
-            ElseIfStatementNode *elseIfBodyStatements = elseIfBodyStatementsHead;
-            ElseStatementNode *elseBodyStatements = elseBodyStatementsHead;
-
-            while (true) {
-                Token elseToken = p->cur_token;
-                if (token_is_keyword("elseif", &elseToken)) {
-                    parser_consume(p);
-
-                    Expression elseIfCondition = expression_parse(p);
-                    if (elseIfCondition.type == EXPRESSION_NONE) {
-                        const char *message = "missing condition for elseif";
-                        output_miss_expression(p, &elseToken.position, message, strlen(message));
-                    }
-
-                    if (!token_is_keyword("then", &p->cur_token)) {
-                        const char *message = "missing \"then\" keyword after elseif condition";
-                        output_miss_expression(p, &elseToken.position, message, strlen(message));
-                    } else {
-                        parser_consume(p);
-                    }
-
-                    ElseIfStatement *elseIfStatement = malloc(sizeof(ElseIfStatement));
-                    elseIfStatement->statements = statement_parse_body(p, is_end_of_if_body);
-                    elseIfStatement->condition = elseIfCondition;
-                    
-                    ElseIfStatementNode *node = malloc(sizeof(ElseIfStatementNode));
-                    node->value = elseIfStatement;
-                    node->next = nullptr;
-
-                    elseIfBodyStatements->next = node;
-                    elseIfBodyStatements = node;
-                    continue;
-                }
-
-                if (token_is_keyword("else", &elseToken)) {
-                    parser_consume(p);
-
-                    ElseStatement *elseStatement = malloc(sizeof(ElseStatement));
-                    elseStatement->statements = statement_parse_body(p, is_end_of_if_body);
-                    
-                    ElseStatementNode *node = malloc(sizeof(ElseStatementNode));
-                    node->value = elseStatement;
-                    node->next = nullptr;
-
-                    elseBodyStatements->next = node;
-                    elseBodyStatements = node;
-                    continue;
-                }
-
-                break;
-            }
-        }
-
-        Token end = p->cur_token;
-        if (!token_is_keyword("end", &p->cur_token)) {
-            const char *message = "missing \"end\" of if statement";
-            output_miss_keyword_end(p, &_if.position, message, strlen(message));
-        } else {
-            parser_consume(p);
-        }
-
-        Statement *statement = statement_new();
-
-        IfStatement _ifStatement;
-        _ifStatement.parent = statement;
-        _ifStatement.condition = condition;
-        _ifStatement.if_body = ifBodyStatements;
-        //TODO: finish else and else if statements
-        //        _ifStatement.else_if_body_nodes = elseIfBodyStatementsHead->next;
-        //        free(elseIfBodyStatementsHead);
-        //        _ifStatement.else_body_nodes = elseBodyStatementsHead->next;
-        //        free(elseBodyStatementsHead);
-
-        statement->type = STATEMENT_IF;
-        statement->value = &_ifStatement;
-        statement->position = position_from_to(&_if.position, &end.position);
-        return statement;
+        return if_statement_parse(p, &_if);
     }
 
+    if (token_is_keyword("for", &token)) {
+        Token _for = p->cur_token;
+        parser_consume(p);
+
+        return for_statement_parse(p, &_for);
+    }
+    
     if (token.type == TOKEN_END) {
         Statement *statement = statement_new();
         statement->type = STATEMENT_END;
@@ -290,6 +511,10 @@ Statement *statement_parse(Parser *p) {
 
 StatementNode *statement_parse_body(Parser *p, bool (*isEnd)(Token *token)) {
     StatementNode *statementHead = malloc(sizeof(StatementNode));
+    if (statementHead == nullptr) {
+        UNIMPLEMENTED("statement_parse_body");
+    }
+    
     statementHead->value = nullptr;
     StatementNode *statementCurrent = statementHead;
 
@@ -302,6 +527,10 @@ StatementNode *statement_parse_body(Parser *p, bool (*isEnd)(Token *token)) {
 
         if (statement->type != STATEMENT_NONE) {
             StatementNode *node = malloc(sizeof(StatementNode));
+            if (node == nullptr) {
+                UNIMPLEMENTED("statement_parse_body");
+            }
+            
             node->value = statement;
             node->next = nullptr;
 

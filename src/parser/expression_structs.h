@@ -3,6 +3,7 @@
 
 #include "position.h"
 #include "statement_struct.h"
+#include "symbol.h"
 
 typedef enum {
     EXPRESSION_NONE = 0,
@@ -85,22 +86,19 @@ typedef struct {
 
 typedef struct {
     Expression *parent;
-    const char *text;
-    size_t text_len;
+    Symbol *symbol;
 } VariableExpression;
 
 typedef struct {
     Expression *parent;
     Expression *first;
-    const char *index;
-    size_t index_len;
+    Symbol *index;
 } VariableNameIndexExpression;
 
 typedef struct {
     Expression *parent;
     Expression *first;
-    const char *index;
-    size_t index_len;
+    Symbol *index;
 } VariableNameIndexWithSelfExpression;
 
 typedef struct {
@@ -111,8 +109,7 @@ typedef struct {
 
 typedef struct {
     Position position;
-    const char *text;
-    size_t text_len;
+    Symbol *name;
 } FunctionParameter;
 
 typedef struct FunctionParameterNode {

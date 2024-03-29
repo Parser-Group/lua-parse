@@ -5,6 +5,7 @@
 #include "expressions.h"
 #include "expression_structs.h"
 #include "statement_struct.h"
+#include "symbol.h"
 
 typedef struct {
     Statement *parent;
@@ -18,23 +19,20 @@ typedef struct {
 
 typedef struct {
     Statement *parent;
-    const char *symbol;
-    size_t symbol_len;
+    Symbol *symbol;
     Expression *initializer;
 } VariableDeclaration;
 
 typedef struct {
     Statement *parent;
     Expression expression;
-    const char *symbol;
-    size_t symbol_len;
+    Symbol *symbol;
 } FunctionDeclaration;
 
 typedef struct {
     Statement *parent;
     Expression expression;
-    const char *symbol;
-    size_t symbol_len;
+    Symbol *symbol;
 } VariableAssignmentStatement;
 
 typedef struct {
@@ -63,5 +61,19 @@ typedef struct {
     ElseIfStatementNode *else_if_body_nodes;
     ElseStatementNode *else_body_nodes;
 } IfStatement;
+
+typedef struct {
+    Statement *parent;
+    Symbol *symbol;
+    Expression initializer;
+    Expression condition;
+    Expression increment;
+} ForNumericLoopStatement;
+
+typedef struct {
+    Statement *parent;
+    SymbolNode *symbols;
+    Expression get_iterator;
+} ForGenericLoopStatement;
 
 #endif //LUA_PARSER_STATEMENT_STRUCTS_H

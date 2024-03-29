@@ -15,10 +15,13 @@ OUTPUT_METHOD_IMPL(output_miss_close_bracket, OUTPUT_MISS_CLOSE_BRACKET)
 OUTPUT_METHOD_IMPL(output_miss_open_brace, OUTPUT_MISS_OPEN_BRACE)
 OUTPUT_METHOD_IMPL(output_miss_close_brace, OUTPUT_MISS_CLOSE_BRACE)
 
+OUTPUT_METHOD_IMPL(output_miss_comma, OUTPUT_MISS_COMMA)
 OUTPUT_METHOD_IMPL(output_miss_symbol, OUTPUT_MISS_SYMBOL)
 OUTPUT_METHOD_IMPL(output_miss_expression, OUTPUT_MISS_EXPRESSION)
 OUTPUT_METHOD_IMPL(output_miss_keyword_end, OUTPUT_MISS_KEYWORD_END)
 OUTPUT_METHOD_IMPL(output_miss_keyword_then, OUTPUT_MISS_KEYWORD_THEN)
+OUTPUT_METHOD_IMPL(output_miss_keyword_do, OUTPUT_MISS_KEYWORD_DO)
+OUTPUT_METHOD_IMPL(output_miss_keyword_in, OUTPUT_MISS_KEYWORD_IN)
 
 OUTPUT_METHOD_IMPL(output_unexpected_token, OUTPUT_UNEXPECTED_TOKEN)
 OUTPUT_METHOD_IMPL(output_unexpected_keyword, OUTPUT_UNEXPECTED_KEYWORD)
@@ -42,6 +45,8 @@ const char* outputCode_to_string(OutputCode code) {
         case OUTPUT_MISS_CLOSE_BRACE:
             return "MISS_CLOSE_BRACE";
 
+        case OUTPUT_MISS_COMMA:
+            return "MISS_COMMA";
         case OUTPUT_MISS_SYMBOL:
             return "MISS_SYMBOL";
         case OUTPUT_MISS_EXPRESSION:
@@ -50,6 +55,10 @@ const char* outputCode_to_string(OutputCode code) {
             return "MISS_KEYWORD_END";
         case OUTPUT_MISS_KEYWORD_THEN:
             return "MISS_KEYWORD_THEN";
+        case OUTPUT_MISS_KEYWORD_DO:
+            return "MISS_KEYWORD_DO";
+        case OUTPUT_MISS_KEYWORD_IN:
+            return "MISS_KEYWORD_IN";
 
         case OUTPUT_UNEXPECTED_TOKEN:
             return "UNEXPECTED_TOKEN";
