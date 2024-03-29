@@ -524,7 +524,6 @@ StatementNode *statement_parse_body(Parser *p, bool (*isEnd)(Token *token)) {
         }
 
         Statement *statement = statement_parse(p);
-
         if (statement->type != STATEMENT_NONE) {
             StatementNode *node = malloc(sizeof(StatementNode));
             if (node == nullptr) {
@@ -536,6 +535,9 @@ StatementNode *statement_parse_body(Parser *p, bool (*isEnd)(Token *token)) {
 
             statementCurrent->next = node;
             statementCurrent = node;
+        }
+        else {
+            free(statement);    
         }
     }
 

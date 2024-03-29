@@ -6,9 +6,9 @@
 #include "parser/statement.h"
 
 void printOutput(Position *pos, OutputCode code, const char *message, size_t message_len) {
-    char *positionStr = position_to_string(pos);
-    printf("%s -> %s: %.*s\n", positionStr, outputCode_to_string(code), (int)message_len, message);
-    free(positionStr);
+//    char *positionStr = position_to_string(pos);
+//    printf("%s -> %s: %.*s\n", positionStr, outputCode_to_string(code), (int)message_len, message);
+//    free(positionStr);
 }
 
 int main() {

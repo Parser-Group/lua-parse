@@ -294,25 +294,26 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         Token openBracket = p->cur_token;
         parser_consume(p);
 
-        VariableIndexExpression varExp;
-        varExp.parent = &exp;
-        varExp.first = &first;
-        varExp.index = expression_parse(p);
-        
-        exp.type = EXPRESSION_VARIABLE_INDEX;
-        exp.position = position_from_to(&first.position, &varExp.index.position);
-        exp.value = &varExp;
-
-        if (varExp.index.type == EXPRESSION_NONE) {
+        Expression index = expression_parse(p);
+        if (index.type == EXPRESSION_NONE) {
             output_miss_expression(p, &openBracket.position, "", 0);
         }
-        
+
         if (p->cur_token.type != TOKEN_CLOSE_BRACKET) {
             output_miss_close_bracket(p, &openBracket.position, "", 0);
         }
         else {
             parser_consume(p);
         }
+        
+        VariableIndexExpression varExp;
+        varExp.parent = &exp;
+        varExp.first = &first;
+        varExp.index = index;
+        
+        exp.type = EXPRESSION_VARIABLE_INDEX;
+        exp.position = position_from_to(&first.position, &varExp.index.position);
+        exp.value = &varExp;
 
         return exp;
     }
