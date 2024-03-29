@@ -483,8 +483,7 @@ Statement* statement_parse(Parser *p) {
 
         Statement *child = local_statement_parse(p);
         if (child->type == STATEMENT_NONE) {
-            const char *message = "unexpected \"local\" keyword";
-            output_unexpected_token(p, &token.position, message, strlen(message));
+            output_unexpected_token(p, &token, "expected variable or function declaration after: %s");
             return statement_empty();
         }
 
@@ -514,14 +513,35 @@ Statement* statement_parse(Parser *p) {
         return for_statement_parse(p, &_for);
     }
     
+    if (token_is_keyword("return", &token)) {
+        Token _return = p->cur_token;
+        parser_consume(p);
+        
+        Expression expression = expression_parse(p);
+        
+        Statement *statement = statement_new();
+        
+        ReturnStatement *returnStatement = malloc(sizeof(ReturnStatement));
+        if (returnStatement == nullptr) {
+            UNIMPLEMENTED("statement_parse");
+        }
+
+        returnStatement->parent = statement;
+        returnStatement->expression = expression;
+        
+        statement->type = STATEMENT_RETURN;
+        statement->value = returnStatement;
+        statement->position = position_from_to(&_return.position, &expression.position);
+        return statement;
+    }
+    
     if (token.type == TOKEN_END) {
         Statement *statement = statement_new();
         statement->type = STATEMENT_END;
         return statement;
     }
-
-    const char *message = token_to_string(&token);
-    output_unexpected_token(p, &token.position, message, strlen(message));
+    
+    output_unexpected_token(p, &token, "%s");
     parser_consume(p);
 
     return statement_empty();

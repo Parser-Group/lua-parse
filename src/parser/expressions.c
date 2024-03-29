@@ -128,7 +128,7 @@ Expression function_expression_parse(Parser *p, Token func) {
         lastPos = func.position;
     }
     
-    if (p->cur_token.type != TOKEN_END) {
+    if (!token_is_keyword("end", &p->cur_token)) {
         const char *message = "missing \"end\" to signal end of function";
         output_miss_keyword_end(p, &func.position, message, strlen(message));
     }
@@ -150,6 +150,156 @@ Expression function_expression_parse(Parser *p, Token func) {
     exp.value = &functionExpression;
     exp.position = functionExpression.position;
     return exp;
+}
+
+Expression expression_table_parse(Parser *p, Token *openBrace) {
+    TableInitializerExpressionNode *initializerExpressionsHead = malloc(sizeof(TableInitializerExpressionNode));
+    if (initializerExpressionsHead == nullptr) {
+        UNIMPLEMENTED("expression_table_parse");
+    }
+
+    initializerExpressionsHead->value = nullptr;
+    initializerExpressionsHead->next = nullptr;
+
+    TableInitializerExpressionNode *initializerExpressionsCurrent = initializerExpressionsHead;
+    while (true) {
+        if (p->cur_token.type == TOKEN_SYMBOL) {
+            Symbol *symbol = symbol_from_token(&p->cur_token);
+            parser_consume(p);
+
+            Position *lastPos = &symbol->position;
+            if (p->cur_token.type != TOKEN_EQUAL) {
+                const char *message = "missing \"=\" (equal) sign after symbol";
+                output_miss_equal(p, lastPos, message, strlen(message));
+            } else {
+                lastPos = &p->cur_token.position;
+                parser_consume(p);
+            }
+
+            Expression initializer = expression_parse(p);
+            if (initializer.type == EXPRESSION_NONE) {
+                const char *message = "missing initializer for symbol in table";
+                output_miss_expression(p, lastPos, message, strlen(message));
+            }
+
+            TableInitializerExpressionNode *node = malloc(sizeof(TableInitializerExpressionNode));
+            if (node == nullptr) {
+                UNIMPLEMENTED("expression_table_parse");
+            }
+
+            TableNamedInitializerExpression expression;
+
+            expression.symbol = symbol;
+            expression.initializer = initializer;
+            expression.position = position_from_to(&symbol->position, &initializer.position);
+
+            node->type = TABLE_INITIALIZER_NAMED;
+            node->value = &expression;
+            node->next = nullptr;
+
+            initializerExpressionsCurrent->next = node;
+            initializerExpressionsCurrent = node;
+            goto afterInitializerExpression;
+        }
+
+        if (p->cur_token.type == TOKEN_OPEN_BRACKET) {
+            Token openBracket = p->cur_token;
+            parser_consume(p);
+
+            Position *lastPos = &openBracket.position;
+            Expression index = expression_parse(p);
+            if (index.type == EXPRESSION_NONE) {
+                const char *message = "missing index expression in table initialization";
+                output_miss_expression(p, &openBracket.position, message, strlen(message));
+            } else {
+                lastPos = &index.position;
+            }
+
+            if (p->cur_token.type != TOKEN_CLOSE_BRACKET) {
+                const char *message = "missing closing bracket after index expression";
+                output_miss_close_bracket(p, lastPos, message, strlen(message));
+            } else {
+                lastPos = &p->cur_token.position;
+                parser_consume(p);
+            }
+
+            if (p->cur_token.type != TOKEN_EQUAL) {
+                const char *message = "missing \"=\" (equal) sign after index";
+                output_miss_equal(p, lastPos, message, strlen(message));
+            } else {
+                lastPos = &p->cur_token.position;
+                parser_consume(p);
+            }
+
+            Expression initializer = expression_parse(p);
+            if (initializer.type == EXPRESSION_NONE) {
+                const char *message = "missing initializer for symbol in table";
+                output_miss_expression(p, lastPos, message, strlen(message));
+            }
+
+            TableInitializerExpressionNode *node = malloc(sizeof(TableInitializerExpressionNode));
+            if (node == nullptr) {
+                UNIMPLEMENTED("expression_table_parse");
+            }
+
+            TableIndexInitializerExpression expression;
+
+            expression.index = index;
+            expression.initializer = initializer;
+            expression.position = position_from_to(&openBracket.position, &initializer.position);
+
+            node->type = TABLE_INITIALIZER_INDEX;
+            node->value = &expression;
+            node->next = nullptr;
+
+            initializerExpressionsCurrent->next = node;
+            initializerExpressionsCurrent = node;
+            goto afterInitializerExpression;
+        }
+
+        Expression expression = expression_parse(p);
+        if (expression.type != EXPRESSION_NONE) {
+            TableInitializerExpressionNode *node = malloc(sizeof(TableInitializerExpressionNode));
+            if (node == nullptr) {
+                UNIMPLEMENTED("expression_table_parse");
+            }
+
+            node->type = TABLE_INITIALIZER_EXPRESSION;
+            node->value = &expression;
+            node->next = nullptr;
+
+            initializerExpressionsCurrent->next = node;
+            initializerExpressionsCurrent = node;
+            goto afterInitializerExpression;
+        }
+
+        afterInitializerExpression:
+        if (p->cur_token.type == TOKEN_COMMA) {
+            parser_consume(p);
+            continue;
+        }
+
+        if (p->cur_token.type == TOKEN_CLOSE_BRACE) {
+            break;
+        }
+
+        output_unexpected_token(p, &p->cur_token, "unexpected token in table initializer: %s");
+        parser_consume(p);
+    }
+    Token closeBrace = p->cur_token;
+    parser_consume(p);
+
+    Expression expression;
+
+    TableExpression tableExpression;
+    tableExpression.parent = &expression;
+    tableExpression.initializers = initializerExpressionsHead->next;
+
+    expression.type = EXPRESSION_TABLE;
+    expression.value = &tableExpression;
+    expression.position = position_from_to(&openBrace->position, &closeBrace.position);
+
+    return expression;
 }
 
 Expression binary_expression_parse(Parser *p, Expression left) {
@@ -230,6 +380,31 @@ Expression internal_expression_parse(Parser *p) {
         
         return exp;
     }
+
+    if (token.type == TOKEN_HASH) {
+        parser_consume(p);
+
+        Position *lastPos = &token.position;
+        Expression valueExpression = expression_parse(p);
+        if (valueExpression.type == EXPRESSION_NONE) {
+            const char *message = "expected valueExpression after count operator";
+            output_miss_expression(p, &token.position, message, strlen(message));
+        } else {
+            lastPos = &valueExpression.position;
+        }
+
+        Expression expression;
+
+        CountExpression countExpression;
+        countExpression.parent = &expression;
+        countExpression.expression = valueExpression;
+
+        expression.type = EXPRESSION_COUNT;
+        expression.value = &countExpression;
+        expression.position = position_from_to(&token.position, lastPos);
+
+        return expression;
+    }
     
     if (token.type == TOKEN_SYMBOL) {
         parser_consume(p);
@@ -278,6 +453,66 @@ Expression internal_expression_parse(Parser *p) {
         return exp;
     }
 
+    if (token.type == TOKEN_OPEN_BRACE) {
+        parser_consume(p);
+        
+        return expression_table_parse(p, &token);
+    }
+
+    if (token_is_keyword("true", &token)) {
+        parser_consume(p);
+        
+        Expression expression;
+        
+        LiteralBooleanExpression booleanExpression;
+        booleanExpression.parent = &expression;
+        booleanExpression.value = true;
+        
+        expression.position = token.position;
+        expression.type = EXPRESSION_LITERAL_BOOLEAN;
+        expression.value = &booleanExpression;
+        return expression;
+    }
+
+    if (token_is_keyword("false", &token)) {
+        parser_consume(p);
+
+        Expression expression;
+
+        LiteralBooleanExpression booleanExpression;
+        booleanExpression.parent = &expression;
+        booleanExpression.value = false;
+
+        expression.position = token.position;
+        expression.type = EXPRESSION_LITERAL_BOOLEAN;
+        expression.value = &booleanExpression;
+        return expression;
+    }
+
+    if (token_is_keyword("not", &token)) {
+        parser_consume(p);
+        
+        Position *lastPos = &token.position;
+        Expression valueExpression = expression_parse(p);
+        if (valueExpression.type == EXPRESSION_NONE) {
+            const char *message = "missing expression after \"not\" keyword / operator";
+            output_miss_expression(p, &token.position, message, strlen(message));
+        } else {
+            lastPos = &valueExpression.position;
+        }
+        
+        Expression expression;
+        
+        NotExpression notExpression;
+        notExpression.parent = &expression;
+        notExpression.value = valueExpression;
+        
+        expression.position = position_from_to(&token.position, lastPos);
+        expression.type = EXPRESSION_NOT;
+        expression.value = &notExpression;
+        return expression;
+    }
+    
     if (token_is_keyword("function", &token)) {
         parser_consume(p);
         

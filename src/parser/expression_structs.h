@@ -9,7 +9,11 @@ typedef enum {
     EXPRESSION_NONE = 0,
 
     EXPRESSION_PRIORITY,
-    
+
+    EXPRESSION_NOT,
+    EXPRESSION_COUNT,
+
+    EXPRESSION_LITERAL_BOOLEAN,
     EXPRESSION_LITERAL_NUMBER,
     EXPRESSION_LITERAL_STRING,
     
@@ -21,6 +25,8 @@ typedef enum {
     EXPRESSION_BINARY,
     EXPRESSION_FUNCTION,
     EXPRESSION_FUNCTION_CALL,
+
+    EXPRESSION_TABLE,
 } ExpressionType;
 
 typedef struct {
@@ -31,13 +37,23 @@ typedef struct {
 
 typedef struct ExpressionNode {
     struct ExpressionNode *next;
-    Expression *value;
+    __attribute__((unused)) Expression *value;
 } ExpressionNode;
 
 typedef struct {
     Expression *parent;
     Expression value;
 } PriorityExpression;
+
+typedef struct {
+    Expression *parent;
+    Expression value;
+} NotExpression;
+
+typedef struct {
+    Expression *parent;
+    bool value;
+} LiteralBooleanExpression;
 
 typedef struct {
     Expression *parent;
@@ -52,29 +68,29 @@ typedef struct {
 
 //NOTE: values are the same as TokenType for performance
 typedef enum {
-    BINARY_EXPRESSION_NONE = 0,
+    BINARY_EXPRESSION_NONE __attribute__((unused)) = 0,
     
-    BINARY_EXPRESSION_BIT_NOT = 10,
-    BINARY_EXPRESSION_BIT_OR = 11,
-    BINARY_EXPRESSION_BIT_AND = 12,
-    BINARY_EXPRESSION_BIT_SHIFT_LEFT = 13,
-    BINARY_EXPRESSION_BIT_SHIFT_RIGHT = 14,
+    BINARY_EXPRESSION_BIT_NOT __attribute__((unused)) = 10,
+    BINARY_EXPRESSION_BIT_OR __attribute__((unused)) = 11,
+    BINARY_EXPRESSION_BIT_AND __attribute__((unused)) = 12,
+    BINARY_EXPRESSION_BIT_SHIFT_LEFT __attribute__((unused)) = 13,
+    BINARY_EXPRESSION_BIT_SHIFT_RIGHT __attribute__((unused)) = 14,
 
-    BINARY_EXPRESSION_EQUALS = 20,
-    BINARY_EXPRESSION_NOT_EQUALS = 21,
-    BINARY_EXPRESSION_GREATER_THAN = 22,
-    BINARY_EXPRESSION_GREATER_THAN_OR_EQUAL = 23,
-    BINARY_EXPRESSION_LESS_THAN = 24,
-    BINARY_EXPRESSION_LESS_THAN_OR_EQUAL = 25,
+    BINARY_EXPRESSION_EQUALS __attribute__((unused)) = 20,
+    BINARY_EXPRESSION_NOT_EQUALS __attribute__((unused)) = 21,
+    BINARY_EXPRESSION_GREATER_THAN __attribute__((unused)) = 22,
+    BINARY_EXPRESSION_GREATER_THAN_OR_EQUAL __attribute__((unused)) = 23,
+    BINARY_EXPRESSION_LESS_THAN __attribute__((unused)) = 24,
+    BINARY_EXPRESSION_LESS_THAN_OR_EQUAL __attribute__((unused)) = 25,
     
-    BINARY_EXPRESSION_STRING_CONCAT = 30,
+    BINARY_EXPRESSION_STRING_CONCAT __attribute__((unused)) = 30,
     
-    BINARY_EXPRESSION_PLUS = 41,
-    BINARY_EXPRESSION_MINUS = 42,
-    BINARY_EXPRESSION_MULTIPLY = 43,
-    BINARY_EXPRESSION_DIVIDE = 44,
-    BINARY_EXPRESSION_POWER = 45,
-    BINARY_EXPRESSION_MODULO = 46,
+    BINARY_EXPRESSION_PLUS __attribute__((unused)) = 41,
+    BINARY_EXPRESSION_MINUS __attribute__((unused)) = 42,
+    BINARY_EXPRESSION_MULTIPLY __attribute__((unused)) = 43,
+    BINARY_EXPRESSION_DIVIDE __attribute__((unused)) = 44,
+    BINARY_EXPRESSION_POWER __attribute__((unused)) = 45,
+    BINARY_EXPRESSION_MODULO __attribute__((unused)) = 46,
 } BinaryExpressionType;
 
 typedef struct {
@@ -129,5 +145,42 @@ typedef struct {
     ExpressionNode *arguments;
     Expression index;
 } FunctionCallExpression;
+
+typedef struct {
+    Position position;
+    Symbol *symbol;
+    Expression initializer;
+} TableNamedInitializerExpression;
+
+typedef struct {
+    Position position;
+    Expression index;
+    Expression initializer;
+} TableIndexInitializerExpression;
+
+typedef enum {
+    TABLE_INITIALIZER_NONE = 0,
+
+    TABLE_INITIALIZER_NAMED,
+    TABLE_INITIALIZER_INDEX,
+    TABLE_INITIALIZER_EXPRESSION,
+    
+} TableInitializerExpressionNodeType;
+
+typedef struct TableInitializerExpressionNode {
+    struct TableInitializerExpressionNode *next;
+    TableInitializerExpressionNodeType type;
+    void *value;
+} TableInitializerExpressionNode;
+
+typedef struct {
+    Expression *parent;
+    TableInitializerExpressionNode *initializers;
+} TableExpression;
+
+typedef struct {
+    Expression *parent;
+    Expression expression;
+} CountExpression;
 
 #endif //LUA_PARSER_EXPRESSION_STRUCTS_H

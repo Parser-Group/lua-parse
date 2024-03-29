@@ -13,6 +13,8 @@ OUTPUT_METHOD(output_miss_open_brace)
 OUTPUT_METHOD(output_miss_close_brace)
 
 OUTPUT_METHOD(output_miss_comma)
+OUTPUT_METHOD(output_miss_equal)
+
 OUTPUT_METHOD(output_miss_symbol)
 OUTPUT_METHOD(output_miss_expression)
 OUTPUT_METHOD(output_miss_keyword_end)
@@ -20,7 +22,8 @@ OUTPUT_METHOD(output_miss_keyword_then)
 OUTPUT_METHOD(output_miss_keyword_do)
 OUTPUT_METHOD(output_miss_keyword_in)
 
-OUTPUT_METHOD(output_unexpected_token)
+/// message has to include one '%s' for the token data to go 
+void output_unexpected_token(Parser *p, Token *token, const char *message);
 OUTPUT_METHOD(output_unexpected_keyword)
 OUTPUT_METHOD(output_unexpected_expression)
 

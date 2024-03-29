@@ -49,7 +49,7 @@ LiteralToken literal_tokens[] = {
         {.text = "/", .type = TOKEN_DIVIDE},
         {.text = "^", .type = TOKEN_POWER},
         {.text = "%", .type = TOKEN_MODULO},
-        {.text = "#", .type = TOKEN_LENGTH},
+        {.text = "#", .type = TOKEN_HASH},
 };
 #define get_literal_tokens_count sizeof(literal_tokens)/sizeof(literal_tokens[0])
 
@@ -57,7 +57,8 @@ const char *keywords[] = {
         "and", "break", "do", "else", "elseif", "end",
         "false", "for", "function", "goto", "if",
         "in", "local", "nil", "or", "repeat",
-        "return", "then", "true", "until", "while"
+        "return", "then", "true", "until", "while",
+        "not"
 };
 #define get_keywords_count sizeof(keywords)/sizeof(keywords[0])
 

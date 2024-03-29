@@ -32,6 +32,11 @@ typedef struct {
 typedef struct {
     Statement *parent;
     Expression expression;
+} ReturnStatement;
+
+typedef struct {
+    Statement *parent;
+    Expression expression;
     Symbol *symbol;
 } VariableAssignmentStatement;
 

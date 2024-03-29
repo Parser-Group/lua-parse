@@ -52,7 +52,7 @@ typedef enum {
     
     TOKEN_GOTO,
     TOKEN_VAR_ARG,
-    TOKEN_LENGTH,
+    TOKEN_HASH,
 } TokenType;
 
 const char *token_type_name(TokenType type);

@@ -86,7 +86,7 @@ const char *token_type_name(TokenType type) {
             return "power";
         case TOKEN_MODULO:
             return "modulo";
-        case TOKEN_LENGTH:
+        case TOKEN_HASH:
             return "hash";
             
         default:
@@ -98,8 +98,8 @@ char *token_to_string(Token *token) {
     int size = snprintf(NULL, 0, "%.*s \'%s\'", (int)token->text_len, token->text, token_type_name(token->type)) + 1;
     char *buffer = malloc(size);
     
-    if (buffer == NULL) {
-        return NULL;
+    if (buffer == nullptr) {
+        UNIMPLEMENTED("token_to_string");
     }
 
     sprintf(buffer, "%.*s \'%s\'", (int)token->text_len, token->text, token_type_name(token->type));
