@@ -68,12 +68,14 @@ typedef struct {
     Expression initializer;
     Expression condition;
     Expression increment;
+    StatementNode *statements;
 } ForNumericLoopStatement;
 
 typedef struct {
     Statement *parent;
     SymbolNode *symbols;
     Expression get_iterator;
+    StatementNode *statements;
 } ForGenericLoopStatement;
 
 #endif //LUA_PARSER_STATEMENT_STRUCTS_H

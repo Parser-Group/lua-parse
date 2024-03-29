@@ -289,7 +289,23 @@ Statement* for_generic_statement_parse(Parser *p, Token *_for, Symbol *symbol, P
         output_miss_keyword_end(p, &_for->position, message, strlen(message));
     }
 
-    UNIMPLEMENTED("for_generic_statement_parse");
+    Statement *statement = statement_new();
+    
+    ForGenericLoopStatement *forGenericLoopStatement = malloc(sizeof(ForGenericLoopStatement));
+    if (forGenericLoopStatement == nullptr) {
+        UNIMPLEMENTED("for_generic_statement_parse");
+    } 
+    
+    forGenericLoopStatement->parent = statement;
+    forGenericLoopStatement->symbols = symbolsHead;
+    forGenericLoopStatement->get_iterator = getIterator;
+    forGenericLoopStatement->statements = statements;
+    
+    statement->type = STATEMENT_FOR_GENERIC;
+    statement->value = forGenericLoopStatement;
+    statement->position = position_from_to(&_for->position, &lastPos);
+    
+    return statement;
 }
 
 Statement* for_statement_parse(Parser *p, Token *_for) {
@@ -398,6 +414,7 @@ Statement* for_statement_parse(Parser *p, Token *_for) {
     forNumericLoopStatement->initializer = iteratorInitializer;
     forNumericLoopStatement->condition = condition;
     forNumericLoopStatement->increment = increment;
+    forNumericLoopStatement->statements = statements;
     
     statement->type = STATEMENT_FOR_NUMERIC;
     statement->value = forNumericLoopStatement;
