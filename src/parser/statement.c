@@ -294,7 +294,7 @@ Statement* for_generic_statement_parse(Parser *p, Token *_for, Symbol *symbol, P
     ForGenericLoopStatement *forGenericLoopStatement = malloc(sizeof(ForGenericLoopStatement));
     if (forGenericLoopStatement == nullptr) {
         UNIMPLEMENTED("for_generic_statement_parse");
-    } 
+    }
     
     forGenericLoopStatement->parent = statement;
     forGenericLoopStatement->symbols = symbolsHead;
@@ -385,6 +385,7 @@ Statement* for_statement_parse(Parser *p, Token *_for) {
     StatementNode *currentStatement = statements;
     while (currentStatement != nullptr) {
         if (currentStatement->next != nullptr) {
+            currentStatement = currentStatement->next;
             continue;
         }
         

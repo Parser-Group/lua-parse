@@ -277,6 +277,12 @@ Expression internal_expression_parse(Parser *p) {
         exp.value = &strLiteral;
         return exp;
     }
+
+    if (token_is_keyword("function", &token)) {
+        parser_consume(p);
+        
+        return function_expression_parse(p, token);
+    }
     
     return expression_empty();
 }
