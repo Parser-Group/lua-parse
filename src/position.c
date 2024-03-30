@@ -23,7 +23,7 @@ Position* position_after(Position *pos) {
 }
 
 /// returns NULL when unable to allocate string. Return value (char *) needs to be freed.
-const char* position_to_string(Position *pos) {
+char* position_to_string(Position *pos) {
     int size = snprintf(NULL, 0, "<%zu:%zu-%zu:%zu>", pos->start_line, pos->start_column, pos->end_line, pos->end_column) + 1;
     char *buffer = malloc(size);
     

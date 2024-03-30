@@ -14,6 +14,6 @@ Position* position_new(size_t start_line, size_t start_column, size_t end_line, 
 
 Position* position_from_to(Position *start, Position *end);
 Position* position_after(Position *pos);
-const char* position_to_string(Position *pos);
+char* position_to_string(Position *pos);
 
 #endif //LUA_PARSER_POSITION_H
