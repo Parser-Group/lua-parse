@@ -31,7 +31,7 @@ typedef enum {
     
     TOKEN_INVALID,
     TOKEN_SYMBOL,
-    TOKEN_KEYWORD,
+    TOKEN_KEYWORD = 50,
     TOKEN_COMMENT,
 
     TOKEN_NUMBER,
@@ -58,12 +58,12 @@ typedef enum {
 const char *token_type_name(TokenType type);
 
 typedef struct Token {
-    Position position;
+    Position *position;
     TokenType type;
     const char *text;
     size_t text_len;
 } Token;
 
-char *token_to_string(Token *token);
+const char *token_to_string(Token *token);
 
 #endif //LUA_PARSER_TOKEN_H

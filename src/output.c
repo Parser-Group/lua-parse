@@ -27,20 +27,22 @@ OUTPUT_METHOD_IMPL(output_miss_keyword_then, OUTPUT_MISS_KEYWORD_THEN)
 OUTPUT_METHOD_IMPL(output_miss_keyword_do, OUTPUT_MISS_KEYWORD_DO)
 OUTPUT_METHOD_IMPL(output_miss_keyword_in, OUTPUT_MISS_KEYWORD_IN)
 
+OUTPUT_METHOD_IMPL(output_miss_goto_point, OUTPUT_MISS_GOTO_POINT)
+
 void output_unexpected_token(Parser *p, Token *token, const char *message) {
     if (p->onOutput == NULL) {
         return;
     }
     
-    int size = snprintf(NULL, 0, message, token_to_string(&p->cur_token)) + 1;
+    int size = snprintf(NULL, 0, message, token_to_string(p->cur_token)) + 1;
     char *newMessage = malloc(size);
     if (message == nullptr) {
         UNIMPLEMENTED("output_unexpected_token");
     }
     
-    sprintf(newMessage, message, token_to_string(&p->cur_token));
+    sprintf(newMessage, message, token_to_string(p->cur_token));
     
-    p->onOutput(&token->position, OUTPUT_UNEXPECTED_TOKEN, newMessage, size);
+    p->onOutput(token->position, OUTPUT_UNEXPECTED_TOKEN, newMessage, size);
     free(newMessage);
 }
 OUTPUT_METHOD_IMPL(output_unexpected_keyword, OUTPUT_UNEXPECTED_KEYWORD)
@@ -89,6 +91,9 @@ const char* outputCode_to_string(OutputCode code) {
         case OUTPUT_UNEXPECTED_EXPRESSION:
             return "UNEXPECTED_EXPRESSION";
 
+        case OUTPUT_MISS_GOTO_POINT:
+            return "MISS_GOTO_POINT";
+            
         default:
             UNREACHABLE("outputCode_to_string");
     }

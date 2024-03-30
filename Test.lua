@@ -236,3 +236,5 @@ local forInLoop = { 1, 2, 3 }
 for i, value in pairs(forInLoop) do
     print(i, value)
 end
+
+local nilValue = nil

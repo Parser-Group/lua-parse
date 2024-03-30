@@ -21,6 +21,7 @@ OUTPUT_METHOD(output_miss_keyword_end)
 OUTPUT_METHOD(output_miss_keyword_then)
 OUTPUT_METHOD(output_miss_keyword_do)
 OUTPUT_METHOD(output_miss_keyword_in)
+OUTPUT_METHOD(output_miss_goto_point)
 
 /// message has to include one '%s' for the token data to go 
 void output_unexpected_token(Parser *p, Token *token, const char *message);

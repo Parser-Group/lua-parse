@@ -11,8 +11,10 @@ typedef enum {
     EXPRESSION_PRIORITY,
 
     EXPRESSION_NOT,
+    EXPRESSION_BIT_NOT,
     EXPRESSION_COUNT,
 
+    EXPRESSION_LITERAL_NIL,
     EXPRESSION_LITERAL_BOOLEAN,
     EXPRESSION_LITERAL_NUMBER,
     EXPRESSION_LITERAL_STRING,
@@ -30,7 +32,7 @@ typedef enum {
 } ExpressionType;
 
 typedef struct {
-    Position position;
+    Position *position;
     ExpressionType  type;
     void *value;
 } Expression;
@@ -52,6 +54,11 @@ typedef struct {
 
 typedef struct {
     Expression *parent;
+    Expression value;
+} BitNotExpression;
+
+typedef struct {
+    Expression *parent;
     bool value;
 } LiteralBooleanExpression;
 
@@ -70,7 +77,6 @@ typedef struct {
 typedef enum {
     BINARY_EXPRESSION_NONE __attribute__((unused)) = 0,
     
-    BINARY_EXPRESSION_BIT_NOT __attribute__((unused)) = 10,
     BINARY_EXPRESSION_BIT_OR __attribute__((unused)) = 11,
     BINARY_EXPRESSION_BIT_AND __attribute__((unused)) = 12,
     BINARY_EXPRESSION_BIT_SHIFT_LEFT __attribute__((unused)) = 13,
@@ -91,6 +97,9 @@ typedef enum {
     BINARY_EXPRESSION_DIVIDE __attribute__((unused)) = 44,
     BINARY_EXPRESSION_POWER __attribute__((unused)) = 45,
     BINARY_EXPRESSION_MODULO __attribute__((unused)) = 46,
+
+    BINARY_EXPRESSION_OR __attribute__((unused)) = 50,
+    BINARY_EXPRESSION_AND __attribute__((unused)) = 51,
 } BinaryExpressionType;
 
 typedef struct {
@@ -124,7 +133,7 @@ typedef struct {
 } VariableIndexExpression;
 
 typedef struct {
-    Position position;
+    Position *position;
     Symbol *name;
 } FunctionParameter;
 
@@ -135,7 +144,7 @@ typedef struct FunctionParameterNode {
 
 typedef struct {
     Expression *parent;
-    Position position;
+    Position *position;
     FunctionParameterNode *parameters;
     StatementNode *statements;
 } FunctionExpression;
@@ -147,13 +156,13 @@ typedef struct {
 } FunctionCallExpression;
 
 typedef struct {
-    Position position;
+    Position *position;
     Symbol *symbol;
     Expression initializer;
 } TableNamedInitializerExpression;
 
 typedef struct {
-    Position position;
+    Position *position;
     Expression index;
     Expression initializer;
 } TableIndexInitializerExpression;

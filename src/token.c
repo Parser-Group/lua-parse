@@ -1,4 +1,3 @@
-#include <memory.h>
 #include "token.h"
 
 const char *token_type_name(TokenType type) {
@@ -94,7 +93,7 @@ const char *token_type_name(TokenType type) {
     }
 }
 
-char *token_to_string(Token *token) {
+const char *token_to_string(Token *token) {
     int size = snprintf(NULL, 0, "%.*s \'%s\'", (int)token->text_len, token->text, token_type_name(token->type)) + 1;
     char *buffer = malloc(size);
     

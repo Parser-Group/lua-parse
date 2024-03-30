@@ -14,6 +14,11 @@ typedef struct {
 
 typedef struct {
     Statement *parent;
+    StatementNode *statements;
+} DoStatement;
+
+typedef struct {
+    Statement *parent;
     Statement *child;
 } LocalStatement;
 
@@ -26,7 +31,7 @@ typedef struct {
 typedef struct {
     Statement *parent;
     Expression expression;
-    Symbol *symbol;
+    Expression index;
 } FunctionDeclaration;
 
 typedef struct {
@@ -37,7 +42,7 @@ typedef struct {
 typedef struct {
     Statement *parent;
     Expression expression;
-    Symbol *symbol;
+    Expression index;
 } VariableAssignmentStatement;
 
 typedef struct {
@@ -82,5 +87,31 @@ typedef struct {
     Expression get_iterator;
     StatementNode *statements;
 } ForGenericLoopStatement;
+
+typedef struct {
+    Statement *parent;
+    StatementNode *statements;
+    Expression condition;
+} RepeatStatement;
+
+typedef struct {
+    Statement *parent;
+    Expression condition;
+    StatementNode *statements;
+} WhileStatement;
+
+typedef struct {
+    Statement *parent;
+    Symbol *symbol;
+} GotoPointStatement;
+
+typedef struct {
+    Statement *parent;
+    Symbol *symbol;
+} GotoStatement;
+
+typedef struct {
+    Statement *parent;
+} BreakStatement;
 
 #endif //LUA_PARSER_STATEMENT_STRUCTS_H

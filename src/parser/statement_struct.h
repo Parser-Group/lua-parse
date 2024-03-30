@@ -12,16 +12,25 @@ typedef enum {
     STATEMENT_FUNCTION_DECLARATION,
     STATEMENT_VARIABLE_DECLARATION,
     STATEMENT_ASSIGNMENT,
-    
+
+    STATEMENT_DO,
     STATEMENT_RETURN,
-    
+
     STATEMENT_IF,
+    
     STATEMENT_FOR_NUMERIC,
     STATEMENT_FOR_GENERIC,
+    STATEMENT_REPEAT,
+    STATEMENT_WHILE,
+    STATEMENT_BREAK,
+    
+    STATEMENT_GOTO_POINT,
+    STATEMENT_GOTO,
+    
 } StatementType;
 
 typedef struct {
-    Position position;
+    Position *position;
     StatementType type;
     void *value;
 } Statement;

@@ -15,8 +15,9 @@ int main() {
     char *content;
     size_t content_len;
     { // load from file
-        FILE *file = fopen(".\\..\\Test.lua", "rb");
-//        FILE *file = fopen("C:\\Coding\\C#\\Lua\\FINLuaDocumentationSumneko.lua", "rb");
+//        FILE *file = fopen(".\\..\\Test.lua", "rb");
+//        FILE *file = fopen(".\\..\\test2.lua", "rb");
+        FILE *file = fopen("C:\\Coding\\C#\\Lua\\FINLuaDocumentationSumneko.lua", "rb"); // bigger file size: 500KB
         if (file == NULL) {
             printf("Error opening file.\n");
             return 1;
