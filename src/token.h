@@ -1,18 +1,41 @@
-#ifndef LUATRANSPILER_TOKEN_H
-#define LUATRANSPILER_TOKEN_H
+#ifndef LUA_PARSER_TOKEN_H
+#define LUA_PARSER_TOKEN_H
 
-#include "utils.h"
-#include "Position.h"
+#include "common.h"
+#include "position.h"
 
 typedef enum {
     TOKEN_END = 0,
+
+    TOKEN_BIT_NOT = 10,
+    TOKEN_BIT_OR = 11,
+    TOKEN_BIT_AND = 12,
+    TOKEN_BIT_SHIFT_LEFT = 13,
+    TOKEN_BIT_SHIFT_RIGHT = 14,
+
+    TOKEN_EQUALS = 20,
+    TOKEN_NOT_EQUALS = 21,
+    TOKEN_GREATER_THAN = 22,
+    TOKEN_GREATER_THAN_OR_EQUAL = 23,
+    TOKEN_LESS_THAN = 24,
+    TOKEN_LESS_THAN_OR_EQUAL = 25,
+
+    TOKEN_STRING_CONCAT = 30,
+
+    TOKEN_PLUS = 41,
+    TOKEN_MINUS = 42,
+    TOKEN_MULTIPLY = 43,
+    TOKEN_DIVIDE = 44,
+    TOKEN_POWER = 45,
+    TOKEN_MODULO = 46,
+    
     TOKEN_INVALID,
     TOKEN_SYMBOL,
-    TOKEN_KEYWORD,
+    TOKEN_KEYWORD = 50,
     TOKEN_COMMENT,
 
-    TOKEN_STRING,
     TOKEN_NUMBER,
+    TOKEN_STRING,
     
     TOKEN_OPEN_PAREN,
     TOKEN_CLOSE_PAREN,
@@ -25,42 +48,22 @@ typedef enum {
     TOKEN_COLON,
     TOKEN_SEMICOLON,
     TOKEN_COMMA,
-    
-    TOKEN_BIT_NOT,
-    TOKEN_BIT_OR,
-    TOKEN_BIT_AND,
-    TOKEN_BIT_SHIFT_LEFT,
-    TOKEN_BIT_SHIFT_RIGHT,
-    
-    TOKEN_EQUALS,
-    TOKEN_NOT_EQUALS,
-    TOKEN_GREATER_THAN,
-    TOKEN_GREATER_THAN_OR_EQUAL,
-    TOKEN_LESS_THAN,
-    TOKEN_LESS_THAN_OR_EQUAL,
+    TOKEN_EQUAL,
     
     TOKEN_GOTO,
-    TOKEN_STRING_CONCAT,
     TOKEN_VAR_ARG,
-    
-    TOKEN_EQUAL,
-    TOKEN_PLUS,
-    TOKEN_MINUS,
-    TOKEN_TIMES,
-    TOKEN_DIVIDE,
-    TOKEN_POWER,
-    TOKEN_MODULO,
-    TOKEN_LENGTH,
-
+    TOKEN_HASH,
 } TokenType;
 
 const char *token_type_name(TokenType type);
 
-typedef struct {
-    Position position;
+typedef struct Token {
+    Position *position;
     TokenType type;
     const char *text;
     size_t text_len;
 } Token;
 
-#endif //LUATRANSPILER_TOKEN_H
+const char *token_to_string(Token *token);
+
+#endif //LUA_PARSER_TOKEN_H

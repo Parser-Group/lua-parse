@@ -227,3 +227,14 @@ local validFloat8 = 0X1.921FB54442D18P+1
 
 local multilineString = [===[test 
 multilineString]===]
+
+local expression = (function()
+    print("hi")
+end)
+
+local forInLoop = { 1, 2, 3 }
+for i, value in pairs(forInLoop) do
+    print(i, value)
+end
+
+local nilValue = nil

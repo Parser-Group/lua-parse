@@ -1,8 +1,10 @@
-#ifndef LUATRANSPILER_UTILS_H
-#define LUATRANSPILER_UTILS_H
+#ifndef LUA_PARSER_COMMON_H
+#define LUA_PARSER_COMMON_H
 
-#include "stdio.h"
-#include "stdlib.h"
+#include <string.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define UNIMPLEMENTED(...)                                                      \
     do {                                                                        \
@@ -10,12 +12,16 @@
         exit(1);                                                                \
     } while(0)
 
+#define SOFT_UNIMPLEMENTED(...)                                             \
+    printf("%s:%d: UNIMPLEMENTED: %s \n", __FILE__, __LINE__, __VA_ARGS__);
+
+#define UNFINISHED(...)                                                     \
+    printf("%s:%d: UNFINISHED: %s \n", __FILE__, __LINE__, __VA_ARGS__);
+
 #define UNREACHABLE(...)                                                      \
     do {                                                                      \
         printf("%s:%d: UNREACHABLE: %s \n", __FILE__, __LINE__, __VA_ARGS__); \
         exit(1);                                                              \
     } while(0)
 
-#define UNUSED(x) (void)(x)
-
-#endif //LUATRANSPILER_UTILS_H
+#endif //LUA_PARSER_COMMON_H

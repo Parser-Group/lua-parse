@@ -1,28 +1,17 @@
-#ifndef LUATRANSPILER_CHAR_POSITION_H
-#define LUATRANSPILER_CHAR_POSITION_H
-#include "Position.h"
+#ifndef LUA_LEXER_CHAR_POSITION_H
+#define LUA_LEXER_CHAR_POSITION_H
 
 typedef struct {
     size_t line;
     size_t column;
 } CharPosition;
 
-Position char_position_from_to(CharPosition start, CharPosition end) {
-    Position position;
-    position.start_line = start.line;
-    position.start_column = start.column;
-    position.end_line = end.line;
-    position.end_column = end.column;
-    return position;
+Position* char_position_from_to(CharPosition start, CharPosition end) {
+    return position_new(start.line, start.column, end.line, end.column);
 }
 
-Position char_position_to_position(CharPosition pos) {
-    Position position;
-    position.start_line = pos.line;
-    position.end_line = pos.line;
-    position.start_column = pos.column;
-    position.end_column = pos.column;
-    return position;
+Position* char_position_to_position(CharPosition pos) {
+    return position_new(pos.line, pos.column, pos.line, pos.column);
 }
 
-#endif //LUATRANSPILER_CHAR_POSITION_H
+#endif //LUA_LEXER_CHAR_POSITION_H

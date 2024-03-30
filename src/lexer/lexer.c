@@ -11,45 +11,44 @@ typedef struct {
 } LiteralToken;
 
 LiteralToken literal_tokens[] = {
-        {.text = "~", .type = TOKEN_BIT_NOT},
-        {.text = "|", .type = TOKEN_BIT_OR},
-        {.text = "&", .type = TOKEN_BIT_AND},
-        {.text = "<<", .type = TOKEN_BIT_SHIFT_LEFT},
-        {.text = ">>", .type = TOKEN_BIT_SHIFT_RIGHT},
-        {.text = ">>", .type = TOKEN_BIT_SHIFT_RIGHT},
-
         {.text = "==", .type = TOKEN_EQUALS},
         {.text = "~=", .type = TOKEN_NOT_EQUALS},
-        {.text = ">", .type = TOKEN_GREATER_THAN},
         {.text = ">=", .type = TOKEN_GREATER_THAN_OR_EQUAL},
-        {.text = "<", .type = TOKEN_LESS_THAN},
         {.text = "<=", .type = TOKEN_LESS_THAN_OR_EQUAL},
 
         {.text = "::", .type = TOKEN_GOTO},
         {.text = "..", .type = TOKEN_STRING_CONCAT},
         {.text = "...", .type = TOKEN_VAR_ARG},
+        
+        {.text = ".", .type = TOKEN_DOT},
+        {.text = ":", .type = TOKEN_COLON},
+        {.text = ";", .type = TOKEN_SEMICOLON},
+        {.text = ",", .type = TOKEN_COMMA},
 
+        {.text = "<<", .type = TOKEN_BIT_SHIFT_LEFT},
+        {.text = ">>", .type = TOKEN_BIT_SHIFT_RIGHT},
+        {.text = ">>", .type = TOKEN_BIT_SHIFT_RIGHT},
+        {.text = "~", .type = TOKEN_BIT_NOT},
+        {.text = "|", .type = TOKEN_BIT_OR},
+        {.text = "&", .type = TOKEN_BIT_AND},
+        
         {.text = "(", .type = TOKEN_OPEN_PAREN},
         {.text = ")", .type = TOKEN_CLOSE_PAREN},
         {.text = "{", .type = TOKEN_OPEN_BRACE},
         {.text = "}", .type = TOKEN_CLOSE_BRACE},
         {.text = "[", .type = TOKEN_OPEN_BRACKET},
         {.text = "]", .type = TOKEN_CLOSE_BRACKET},
-
-        {.text = ".", .type = TOKEN_DOT},
-        {.text = ":", .type = TOKEN_COLON},
-        {.text = ";", .type = TOKEN_SEMICOLON},
-        {.text = ",", .type = TOKEN_COMMA},
-
-
+        
         {.text = "=", .type = TOKEN_EQUAL},
         {.text = "+", .type = TOKEN_PLUS},
         {.text = "-", .type = TOKEN_MINUS},
-        {.text = "*", .type = TOKEN_TIMES},
+        {.text = "*", .type = TOKEN_MULTIPLY},
         {.text = "/", .type = TOKEN_DIVIDE},
         {.text = "^", .type = TOKEN_POWER},
         {.text = "%", .type = TOKEN_MODULO},
-        {.text = "#", .type = TOKEN_LENGTH},
+        {.text = "#", .type = TOKEN_HASH},
+        {.text = ">", .type = TOKEN_GREATER_THAN},
+        {.text = "<", .type = TOKEN_LESS_THAN},
 };
 #define get_literal_tokens_count sizeof(literal_tokens)/sizeof(literal_tokens[0])
 
@@ -57,7 +56,8 @@ const char *keywords[] = {
         "and", "break", "do", "else", "elseif", "end",
         "false", "for", "function", "goto", "if",
         "in", "local", "nil", "or", "repeat",
-        "return", "then", "true", "until", "while"
+        "return", "then", "true", "until", "while",
+        "not"
 };
 #define get_keywords_count sizeof(keywords)/sizeof(keywords[0])
 
@@ -172,7 +172,7 @@ Token* multiline_string(Lexer *l, CharPosition *start_pos, Token *token, size_t 
     token->type = TOKEN_STRING;
     token->text = &l->content[l->cursor];
     
-    while (true) {
+    while (lexer_can_peek(l)) {
         if (lexer_peek_is(l, ']')) {
             size_t foundCount = 0;
             for (size_t i = 0; i < count; ++i) {
@@ -197,37 +197,45 @@ Token* multiline_string(Lexer *l, CharPosition *start_pos, Token *token, size_t 
     return token;
 }
 
-Token lexer_next(Lexer *l) {
+Token* lexer_next(Lexer *l) {
     lexer_trim_left(l);
-    Token token = {0};
-    token.text = &l->content[l->cursor];
+
+    Token *token = malloc(sizeof(Token));
+    if (token == nullptr) {
+        UNIMPLEMENTED("lexer_next");
+    }
+    
+    token->position = nullptr;
+    token->text = &l->content[l->cursor];
     CharPosition start_pos = lexer_get_position(l);
-    //NOTE: correcting column (not good design)
+    //NOTE: correcting column
     ++start_pos.column;
     
     if (!lexer_can_peek(l)) {
+        token->type = TOKEN_END;
+        token->text_len = 0;
         return token;
     }
     
     if (isalpha(lexer_peek(l)) || lexer_peek(l) == '_') {
-        token.type = TOKEN_SYMBOL;
+        token->type = TOKEN_SYMBOL;
         
         while (lexer_can_peek(l) && (isalnum(lexer_peek(l)) || lexer_peek(l) == '_')) {
             lexer_consume(l, 1);
         }
  
-        token.text_len = &lexer_peek(l) - token.text;
+        token->text_len = &lexer_peek(l) - token->text;
 
         size_t keywords_count = get_keywords_count;
         for (size_t i = 0; i < keywords_count; ++i) {
             size_t keyword_len = strlen(keywords[i]);
-            if (keyword_len == token.text_len && memcmp(keywords[i], token.text, keyword_len) == 0) {
-                token.type = TOKEN_KEYWORD;
+            if (keyword_len == token->text_len && memcmp(keywords[i], token->text, keyword_len) == 0) {
+                token->type = TOKEN_KEYWORD;
                 break;
             }
         }
 
-        token.position = char_position_from_to(start_pos, lexer_get_position(l));
+        token->position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
     
@@ -240,32 +248,39 @@ Token lexer_next(Lexer *l) {
             while (!lexer_starts_with(l, "]]")) {
                 lexer_consume(l, 1);
             }
-        } else {
-            while (lexer_can_peek(l) && !lexer_peek_is(l, '\n') && !lexer_peek_is(l, '\r')) {
-                lexer_consume(l, 1);
-            }
+
+            token->type = TOKEN_COMMENT;
+            token->text_len = &lexer_peek(l) - token->text;
+            token->position = char_position_from_to(start_pos, lexer_get_position(l));
+
+            lexer_consume(l, 2);
+            return token;
+        }
+
+        while (lexer_can_peek(l) && !lexer_peek_is(l, '\n') && !lexer_peek_is(l, '\r')) {
+            lexer_consume(l, 1);
         }
         
-        token.type = TOKEN_COMMENT;
-        token.text_len = &lexer_peek(l) - token.text;
-        token.position = char_position_from_to(start_pos, lexer_get_position(l));
+        token->type = TOKEN_COMMENT;
+        token->text_len = &lexer_peek(l) - token->text;
+        token->position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
     
-    if (lexer_peek_is(l, '\"') || lexer_peek_is(l, '\'')) {
+    if (lexer_can_peek(l) && (lexer_peek(l) == '\"' || lexer_peek(l) == '\'')) {
         //TODO: handle escape sequences
         const char quoteType = lexer_peek(l);
         lexer_consume(l, 1);
         
-        token.text = &lexer_peek(l);
-        while (lexer_can_peek(l) && !lexer_peek_is(l, quoteType)) {
+        token->text = &lexer_peek(l);
+        while (!lexer_peek_is(l, quoteType)) {
             lexer_consume(l, 1);
         }
-        token.text_len = &lexer_peek(l) - token.text;
+        token->text_len = &lexer_peek(l) - token->text;
         lexer_consume(l, 1);
         
-        token.type = TOKEN_STRING;
-        token.position = char_position_from_to(start_pos, lexer_get_position(l));
+        token->type = TOKEN_STRING;
+        token->position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
     
@@ -279,14 +294,20 @@ Token lexer_next(Lexer *l) {
         }
         
         if (lexer_peek_is_with_offset(l, '[', count + 1)) {
-            return *multiline_string(l, &start_pos, &token, count);
+            return multiline_string(l, &start_pos, token, count);
         }
     }
     
-    if (isdigit(lexer_peek(l))) {
+    if (isdigit(lexer_peek(l))
+            || ((lexer_peek(l) == '-' || lexer_peek(l) == '+')
+                && lexer_can_peek_with_offset(l, 1)
+                && isdigit(lexer_peek_with_offset(l, 1)))) {
+        if (lexer_peek(l) == '-' || lexer_peek(l) == '+') {
+            lexer_consume(l, 1);
+        }
         lexer_consume(l, 1);
         
-        if (lexer_peek_is(l, 'x') || lexer_peek_is(l, 'X')) {
+        if (lexer_can_peek(l) && (lexer_peek(l) == 'x' || lexer_peek(l) == 'X')) {
             lexer_consume(l, 1);
             bool found_point = false;
             while (lexer_can_peek(l)) {
@@ -296,19 +317,11 @@ Token lexer_next(Lexer *l) {
                     continue;
                 }
                 
-                if (!(isdigit(lexer_peek(l))
-                    || lexer_peek(l) == 'a'
-                    || lexer_peek(l) == 'b'
-                    || lexer_peek(l) == 'c'
-                    || lexer_peek(l) == 'd'
-                    || lexer_peek(l) == 'e'
-                    || lexer_peek(l) == 'f'
-                    || lexer_peek(l) == 'A'
-                    || lexer_peek(l) == 'B'
-                    || lexer_peek(l) == 'C'
-                    || lexer_peek(l) == 'D'
-                    || lexer_peek(l) == 'E'
-                    || lexer_peek(l) == 'F')) {
+                
+                char x = lexer_peek(l);
+                if (!(isdigit(x)
+                    || x == 'a' || x == 'b' || x == 'c' || x == 'd' || x == 'e' || x == 'f'
+                    || x == 'A' || x == 'B' || x == 'C' || x == 'D' || x == 'E' || x == 'F')) {
                     break;
                 }
                 lexer_consume(l, 1);
@@ -325,9 +338,9 @@ Token lexer_next(Lexer *l) {
                 }
             }
             
-            token.type = TOKEN_NUMBER;
-            token.text_len = &lexer_peek(l) - token.text;
-            token.position = char_position_from_to(start_pos, lexer_get_position(l));
+            token->type = TOKEN_NUMBER;
+            token->text_len = &lexer_peek(l) - token->text;
+            token->position = char_position_from_to(start_pos, lexer_get_position(l));
             return token;
         }
         
@@ -357,9 +370,9 @@ Token lexer_next(Lexer *l) {
             lexer_consume(l, 1);
         }
         
-        token.type = TOKEN_NUMBER;
-        token.text_len = &lexer_peek(l) - token.text;
-        token.position = char_position_from_to(start_pos, lexer_get_position(l));
+        token->type = TOKEN_NUMBER;
+        token->text_len = &lexer_peek(l) - token->text;
+        token->position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
     
@@ -370,16 +383,16 @@ Token lexer_next(Lexer *l) {
             size_t text_len = strlen(literal_tokens[i].text);
             lexer_consume(l, text_len);
             
-            token.type = literal_tokens[i].type;
-            token.text_len = text_len;
-            token.position = char_position_from_to(start_pos, lexer_get_position(l));
+            token->type = literal_tokens[i].type;
+            token->text_len = text_len;
+            token->position = char_position_from_to(start_pos, lexer_get_position(l));
             return token;
         }
     }
 
     lexer_consume(l, 1);
-    token.type = TOKEN_INVALID;
-    token.text_len = 1;
-    token.position = char_position_to_position(lexer_get_position(l));
+    token->type = TOKEN_INVALID;
+    token->text_len = 1;
+    token->position = char_position_to_position(lexer_get_position(l));
     return token;
 }
