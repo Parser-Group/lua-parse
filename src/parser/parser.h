@@ -9,6 +9,6 @@
 Parser parser_new(Lexer *l, void (*onOutput) (Position *position, OutputCode code, const char *message, size_t message_len));
 void parser_consume(Parser *p);
 void parser_rollback(Parser *p);
-Statement* parser_next(Parser *p);
+Statement parser_next(Parser *p);
 
 #endif //LUA_PARSER_PARSER_H

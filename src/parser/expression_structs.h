@@ -32,44 +32,38 @@ typedef enum {
 } ExpressionType;
 
 typedef struct {
-    Position *position;
+    Position position;
     ExpressionType  type;
     void *value;
 } Expression;
 
 typedef struct ExpressionNode {
     struct ExpressionNode *next;
-    __attribute__((unused)) Expression *value;
+    Expression *value;
 } ExpressionNode;
 
 typedef struct {
-    Expression *parent;
-    Expression value;
+        Expression value;
 } PriorityExpression;
 
 typedef struct {
-    Expression *parent;
-    Expression value;
+        Expression value;
 } NotExpression;
 
 typedef struct {
-    Expression *parent;
-    Expression value;
+        Expression value;
 } BitNotExpression;
 
 typedef struct {
-    Expression *parent;
-    bool value;
+        bool value;
 } LiteralBooleanExpression;
 
 typedef struct {
-    Expression *parent;
-    double value; 
+        double value; 
 } LiteralNumberExpression;
 
 typedef struct {
-    Expression *parent;
-    const char* value;
+        const char* value;
     size_t value_len;
 } LiteralStringExpression;
 
@@ -103,37 +97,32 @@ typedef enum {
 } BinaryExpressionType;
 
 typedef struct {
-    Expression *parent;
-    BinaryExpressionType type;
+        BinaryExpressionType type;
     Expression *left;
     Expression *right;
 } BinaryExpression;
 
 typedef struct {
-    Expression *parent;
-    Symbol *symbol;
+        Symbol *symbol;
 } VariableExpression;
 
 typedef struct {
-    Expression *parent;
-    Expression *first;
+        Expression *first;
     Symbol *index;
 } VariableNameIndexExpression;
 
 typedef struct {
-    Expression *parent;
-    Expression *first;
+        Expression *first;
     Symbol *index;
 } VariableNameIndexWithSelfExpression;
 
 typedef struct {
-    Expression *parent;
-    Expression *first;
+        Expression *first;
     Expression index;
 } VariableIndexExpression;
 
 typedef struct {
-    Position *position;
+    Position position;
     Symbol *name;
 } FunctionParameter;
 
@@ -143,26 +132,24 @@ typedef struct FunctionParameterNode {
 } FunctionParameterNode;
 
 typedef struct {
-    Expression *parent;
-    Position *position;
+        Position position;
     FunctionParameterNode *parameters;
     StatementNode *statements;
 } FunctionExpression;
 
 typedef struct {
-    Expression *parent;
-    ExpressionNode *arguments;
+        ExpressionNode *arguments;
     Expression index;
 } FunctionCallExpression;
 
 typedef struct {
-    Position *position;
+    Position position;
     Symbol *symbol;
     Expression initializer;
 } TableNamedInitializerExpression;
 
 typedef struct {
-    Position *position;
+    Position position;
     Expression index;
     Expression initializer;
 } TableIndexInitializerExpression;
@@ -183,13 +170,11 @@ typedef struct TableInitializerExpressionNode {
 } TableInitializerExpressionNode;
 
 typedef struct {
-    Expression *parent;
-    TableInitializerExpressionNode *initializers;
+        TableInitializerExpressionNode *initializers;
 } TableExpression;
 
 typedef struct {
-    Expression *parent;
-    Expression expression;
+        Expression expression;
 } CountExpression;
 
 #endif //LUA_PARSER_EXPRESSION_STRUCTS_H

@@ -8,40 +8,29 @@
 #include "symbol.h"
 
 typedef struct {
-    Statement *parent;
-    Expression expression;
-} ExpressionStatement;
-
-typedef struct {
-    Statement *parent;
-    StatementNode *statements;
+        StatementNode *statements;
 } DoStatement;
 
 typedef struct {
-    Statement *parent;
-    Statement *child;
+        Statement child;
 } LocalStatement;
 
 typedef struct {
-    Statement *parent;
-    Symbol *symbol;
+        Symbol *symbol;
     Expression *initializer;
 } VariableDeclaration;
 
 typedef struct {
-    Statement *parent;
-    Expression expression;
+        Expression expression;
     Expression index;
 } FunctionDeclaration;
 
 typedef struct {
-    Statement *parent;
-    Expression expression;
+        Expression expression;
 } ReturnStatement;
 
 typedef struct {
-    Statement *parent;
-    Expression expression;
+        Expression expression;
     Expression index;
 } VariableAssignmentStatement;
 
@@ -65,16 +54,14 @@ typedef struct ElseStatementNode {
 } ElseStatementNode;
 
 typedef struct {
-    Statement *parent;
-    Expression condition;
+        Expression condition;
     StatementNode *if_body;
     ElseIfStatementNode *else_if_body_nodes;
     ElseStatementNode *else_body_nodes;
 } IfStatement;
 
 typedef struct {
-    Statement *parent;
-    Symbol *symbol;
+        Symbol *symbol;
     Expression initializer;
     Expression condition;
     Expression increment;
@@ -82,36 +69,26 @@ typedef struct {
 } ForNumericLoopStatement;
 
 typedef struct {
-    Statement *parent;
-    SymbolNode *symbols;
+        SymbolNode *symbols;
     Expression get_iterator;
     StatementNode *statements;
 } ForGenericLoopStatement;
 
 typedef struct {
-    Statement *parent;
-    StatementNode *statements;
+        StatementNode *statements;
     Expression condition;
 } RepeatStatement;
 
 typedef struct {
-    Statement *parent;
-    Expression condition;
+        Expression condition;
     StatementNode *statements;
 } WhileStatement;
 
 typedef struct {
-    Statement *parent;
-    Symbol *symbol;
-} GotoPointStatement;
-
-typedef struct {
-    Statement *parent;
-    Symbol *symbol;
+        Symbol *symbol;
 } GotoStatement;
 
 typedef struct {
-    Statement *parent;
-} BreakStatement;
+    } BreakStatement;
 
 #endif //LUA_PARSER_STATEMENT_STRUCTS_H

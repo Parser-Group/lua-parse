@@ -30,19 +30,14 @@ typedef enum {
 } StatementType;
 
 typedef struct {
-    Position *position;
+    Position position;
     StatementType type;
     void *value;
 } Statement;
 
 typedef struct StatementNode {
     struct StatementNode *next;
-    Statement *value;
+    Statement value;
 } StatementNode;
-
-typedef struct StatementNodeNode {
-    struct StatementNodeNode *next;
-    StatementNode *value;
-} StatementNodeNode;
 
 #endif //LUA_PARSER_STATEMENT_STRUCT_H

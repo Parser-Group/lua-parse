@@ -13,4 +13,6 @@ CMakeFiles/
 Makefile
 CMakeCache.txt
 cmake_install.cmake
-LuaParser.exe
+Lua_Parser
+Lua_Parser.exe
+Lua_Parser.cbp

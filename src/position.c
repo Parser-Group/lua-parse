@@ -1,24 +1,19 @@
 #include "position.h"
 
-Position* position_new(size_t start_line, size_t start_column, size_t end_line, size_t end_column) {
-    Position *position = malloc(sizeof(Position));
-    if (position == nullptr) {
-        UNIMPLEMENTED("position_new");
-    }
-    
-    position->start_line = start_line;
-    position->start_column = start_column;
-    position->end_line = end_line;
-    position->end_column = end_column;
-    
+Position position_new(size_t start_line, size_t start_column, size_t end_line, size_t end_column) {
+    Position position = {0};
+    position.start_line = start_line;
+    position.start_column = start_column;
+    position.end_line = end_line;
+    position.end_column = end_column;
     return position;
 }
 
-Position* position_from_to(Position *start, Position *end) {
+Position position_from_to(Position *start, Position *end) {
     return position_new(start->start_line, start->start_column, end->end_line, end->end_column);
 }
 
-Position* position_after(Position *pos) {
+Position position_after(Position *pos) {
     return position_new(pos->end_line, pos->end_column + 1, pos->end_column, pos->end_column + 1);
 }
 
