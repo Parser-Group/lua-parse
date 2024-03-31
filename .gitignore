@@ -9,6 +9,7 @@ cmake-build-release/
 # build files on non ide
 bin/
 build/
+.cmake
 CMakeFiles/
 Makefile
 CMakeCache.txt
