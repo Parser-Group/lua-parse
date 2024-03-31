@@ -84,11 +84,4 @@ typedef struct {
     StatementNode *statements;
 } WhileStatement;
 
-typedef struct {
-        Symbol *symbol;
-} GotoStatement;
-
-typedef struct {
-    } BreakStatement;
-
 #endif //LUA_PARSER_STATEMENT_STRUCTS_H

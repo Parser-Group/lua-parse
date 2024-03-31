@@ -820,15 +820,8 @@ Statement statement_parse(Parser *p) {
 
         Statement statement = {0};
 
-        BreakStatement *breakStatement = malloc(sizeof(BreakStatement));
-        if (breakStatement == NULL) {
-            UNIMPLEMENTED("statement_parse");
-        }
-
-
         statement.type = STATEMENT_BREAK;
         statement.position = token.position;
-        statement.value = breakStatement;
         return statement;
     }
 
