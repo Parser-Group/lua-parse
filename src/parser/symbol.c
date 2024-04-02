@@ -2,10 +2,7 @@
 #include "common.h"
 
 Symbol* symbol_from_token(Token *token) {
-    Symbol *symbol = malloc(sizeof(Symbol));
-    if (symbol == NULL) {
-        UNIMPLEMENTED("symbol_from_token");
-    }
+    SAFE_MALLOC(Symbol, symbol)
     
     symbol->position = token->position;
     symbol->value = token->text;

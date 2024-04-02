@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "statement_structs.h"
 
+Statement statement_new(StatementType type);
 Statement statement_parse(Parser *p);
 StatementNode* statement_parse_body(Parser *p, bool (*isEnd)(Token *token));
 

@@ -8,29 +8,29 @@
 #include "symbol.h"
 
 typedef struct {
-        StatementNode *statements;
+    StatementNode *statements;
 } DoStatement;
 
 typedef struct {
-        Statement child;
+    Statement child;
 } LocalStatement;
 
 typedef struct {
-        Symbol *symbol;
+    Symbol *symbol;
     Expression *initializer;
 } VariableDeclaration;
 
 typedef struct {
-        Expression expression;
+    Expression expression;
     Expression index;
 } FunctionDeclaration;
 
 typedef struct {
-        Expression expression;
+    Expression expression;
 } ReturnStatement;
 
 typedef struct {
-        Expression expression;
+    Expression expression;
     Expression index;
 } VariableAssignmentStatement;
 
@@ -54,14 +54,14 @@ typedef struct ElseStatementNode {
 } ElseStatementNode;
 
 typedef struct {
-        Expression condition;
+    Expression condition;
     StatementNode *if_body;
     ElseIfStatementNode *else_if_body_nodes;
     ElseStatementNode *else_body_nodes;
 } IfStatement;
 
 typedef struct {
-        Symbol *symbol;
+    Symbol *symbol;
     Expression initializer;
     Expression condition;
     Expression increment;
@@ -69,18 +69,18 @@ typedef struct {
 } ForNumericLoopStatement;
 
 typedef struct {
-        SymbolNode *symbols;
+    SymbolNode *symbols;
     Expression get_iterator;
     StatementNode *statements;
 } ForGenericLoopStatement;
 
 typedef struct {
-        StatementNode *statements;
+    StatementNode *statements;
     Expression condition;
 } RepeatStatement;
 
 typedef struct {
-        Expression condition;
+    Expression condition;
     StatementNode *statements;
 } WhileStatement;
 

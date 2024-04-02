@@ -13,10 +13,4 @@ include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/include)
 file(GLOB_RECURSE HEADERS "src/*.h")
 file(GLOB_RECURSE SOURCES "src/*.c")
 
-#set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
-#        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-#        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-#        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-#)
-
 add_executable(${CMAKE_PROJECT_NAME} ${HEADERS} ${SOURCES})

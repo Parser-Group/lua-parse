@@ -2,8 +2,8 @@
 #define LUA_PARSER_EXPRESSION_STRUCTS_H
 
 #include "position.h"
-#include "statement_struct.h"
 #include "symbol.h"
+#include "statement_struct.h"
 
 typedef enum {
     EXPRESSION_NONE = 0,
@@ -18,12 +18,12 @@ typedef enum {
     EXPRESSION_LITERAL_BOOLEAN,
     EXPRESSION_LITERAL_NUMBER,
     EXPRESSION_LITERAL_STRING,
-    
+
     EXPRESSION_VARIABLE,
     EXPRESSION_VARIABLE_INDEX,
     EXPRESSION_VARIABLE_NAME_INDEX,
     EXPRESSION_VARIABLE_NAME_INDEX_WITH_SELF,
-    
+
     EXPRESSION_BINARY,
     EXPRESSION_FUNCTION,
     EXPRESSION_FUNCTION_CALL,
@@ -33,7 +33,7 @@ typedef enum {
 
 typedef struct {
     Position position;
-    ExpressionType  type;
+    ExpressionType type;
     void *value;
 } Expression;
 
@@ -43,34 +43,34 @@ typedef struct ExpressionNode {
 } ExpressionNode;
 
 typedef struct {
-        Expression value;
+    Expression value;
 } PriorityExpression;
 
 typedef struct {
-        Expression value;
+    Expression value;
 } NotExpression;
 
 typedef struct {
-        Expression value;
+    Expression value;
 } BitNotExpression;
 
 typedef struct {
-        bool value;
+    bool value;
 } LiteralBooleanExpression;
 
 typedef struct {
-        double value; 
+    double value;
 } LiteralNumberExpression;
 
 typedef struct {
-        const char* value;
+    const char *value;
     size_t value_len;
 } LiteralStringExpression;
 
 //NOTE: values are the same as TokenType for performance
 typedef enum {
     BINARY_EXPRESSION_NONE __attribute__((unused)) = 0,
-    
+
     BINARY_EXPRESSION_BIT_OR __attribute__((unused)) = 11,
     BINARY_EXPRESSION_BIT_AND __attribute__((unused)) = 12,
     BINARY_EXPRESSION_BIT_SHIFT_LEFT __attribute__((unused)) = 13,
@@ -82,9 +82,9 @@ typedef enum {
     BINARY_EXPRESSION_GREATER_THAN_OR_EQUAL __attribute__((unused)) = 23,
     BINARY_EXPRESSION_LESS_THAN __attribute__((unused)) = 24,
     BINARY_EXPRESSION_LESS_THAN_OR_EQUAL __attribute__((unused)) = 25,
-    
+
     BINARY_EXPRESSION_STRING_CONCAT __attribute__((unused)) = 30,
-    
+
     BINARY_EXPRESSION_PLUS __attribute__((unused)) = 41,
     BINARY_EXPRESSION_MINUS __attribute__((unused)) = 42,
     BINARY_EXPRESSION_MULTIPLY __attribute__((unused)) = 43,
@@ -97,27 +97,27 @@ typedef enum {
 } BinaryExpressionType;
 
 typedef struct {
-        BinaryExpressionType type;
-    Expression *left;
-    Expression *right;
+    BinaryExpressionType type;
+    Expression left;
+    Expression right;
 } BinaryExpression;
 
 typedef struct {
-        Symbol *symbol;
+    Symbol *symbol;
 } VariableExpression;
 
 typedef struct {
-        Expression *first;
+    Expression *first;
     Symbol *index;
 } VariableNameIndexExpression;
 
 typedef struct {
-        Expression *first;
+    Expression *first;
     Symbol *index;
 } VariableNameIndexWithSelfExpression;
 
 typedef struct {
-        Expression *first;
+    Expression *first;
     Expression index;
 } VariableIndexExpression;
 
@@ -132,13 +132,12 @@ typedef struct FunctionParameterNode {
 } FunctionParameterNode;
 
 typedef struct {
-        Position position;
     FunctionParameterNode *parameters;
     StatementNode *statements;
 } FunctionExpression;
 
 typedef struct {
-        ExpressionNode *arguments;
+    ExpressionNode *arguments;
     Expression index;
 } FunctionCallExpression;
 
@@ -160,7 +159,7 @@ typedef enum {
     TABLE_INITIALIZER_NAMED,
     TABLE_INITIALIZER_INDEX,
     TABLE_INITIALIZER_EXPRESSION,
-    
+
 } TableInitializerExpressionNodeType;
 
 typedef struct TableInitializerExpressionNode {
@@ -170,11 +169,11 @@ typedef struct TableInitializerExpressionNode {
 } TableInitializerExpressionNode;
 
 typedef struct {
-        TableInitializerExpressionNode *initializers;
+    TableInitializerExpressionNode *initializers;
 } TableExpression;
 
 typedef struct {
-        Expression expression;
+    Expression expression;
 } CountExpression;
 
 #endif //LUA_PARSER_EXPRESSION_STRUCTS_H

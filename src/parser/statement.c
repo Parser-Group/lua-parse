@@ -19,22 +19,24 @@ Statement local_statement_parse(Parser *p) {
             parser_consume(p);
         }
 
-        Expression indexExpression;
-        VariableExpression varExpression;
-        varExpression.symbol = symbol_from_token(&funcName);
+        Expression indexExpression = {0};
+        
+        SAFE_MALLOC(VariableExpression, variableExpression)
+        variableExpression->symbol = symbol_from_token(&funcName);
+        
         indexExpression.type = EXPRESSION_VARIABLE;
-        indexExpression.position = varExpression.symbol->position;
-        indexExpression.value = &varExpression;
+        indexExpression.position = variableExpression->symbol->position;
+        indexExpression.value = variableExpression;
 
         Statement statement = {0};
 
-        FunctionDeclaration functionDeclaration;
-        functionDeclaration.expression = function_expression_parse(p, &func);
-        functionDeclaration.index = indexExpression;
+        SAFE_MALLOC(FunctionDeclaration, functionDeclaration);
+        functionDeclaration->expression = function_expression_parse(p, &func);
+        functionDeclaration->index = indexExpression;
 
         statement.type = STATEMENT_FUNCTION_DECLARATION;
-        statement.value = &functionDeclaration;
-        statement.position = position_from_to(&func.position, &functionDeclaration.expression.position);
+        statement.value = functionDeclaration;
+        statement.position = position_from_to(&func.position, &functionDeclaration->expression.position);
         return statement;
     }
 
@@ -76,7 +78,7 @@ Statement local_statement_parse(Parser *p) {
         return statement;
     }
 
-    return (Statement){0};
+    return (Statement) {0};
 }
 
 bool is_end_of_if_body(Token *token) {
@@ -100,18 +102,10 @@ Statement if_statement_parse(Parser *p, Token *_if) {
 
     StatementNode *ifBodyStatements = statement_parse_body(p, is_end_of_if_body);
 
-    ElseIfStatementNode *elseIfBodyStatementsHead = malloc(sizeof(ElseIfStatementNode));
-    if (elseIfBodyStatementsHead == NULL) {
-        UNIMPLEMENTED("statement_parse");
-    }
-
+    SAFE_MALLOC(ElseIfStatementNode, elseIfBodyStatementsHead)
     elseIfBodyStatementsHead->next = NULL;
     elseIfBodyStatementsHead->value = NULL;
-    ElseStatementNode *elseBodyStatementsHead = malloc(sizeof(ElseStatementNode));
-    if (elseBodyStatementsHead == NULL) {
-        UNIMPLEMENTED("statement_parse");
-    }
-
+    SAFE_MALLOC(ElseStatementNode, elseBodyStatementsHead)
     elseBodyStatementsHead->next = NULL;
     elseBodyStatementsHead->value = NULL;
     {
@@ -136,19 +130,11 @@ Statement if_statement_parse(Parser *p, Token *_if) {
                     parser_consume(p);
                 }
 
-                ElseIfStatement *elseIfStatement = malloc(sizeof(ElseIfStatement));
-                if (elseIfStatement == NULL) {
-                    UNIMPLEMENTED("statement_parse");
-                }
-
+                SAFE_MALLOC(ElseIfStatement, elseIfStatement)
                 elseIfStatement->statements = statement_parse_body(p, is_end_of_if_body);
                 elseIfStatement->condition = elseIfCondition;
 
-                ElseIfStatementNode *node = malloc(sizeof(ElseIfStatementNode));
-                if (node == NULL) {
-                    UNIMPLEMENTED("statement_parse");
-                }
-
+                SAFE_MALLOC(ElseIfStatementNode, node)
                 node->value = elseIfStatement;
                 node->next = NULL;
 
@@ -160,18 +146,10 @@ Statement if_statement_parse(Parser *p, Token *_if) {
             if (token_is_keyword("else", &elseToken)) {
                 parser_consume(p);
 
-                ElseStatement *elseStatement = malloc(sizeof(ElseStatement));
-                if (elseStatement == NULL) {
-                    UNIMPLEMENTED("statement_parse");
-                }
-
+                SAFE_MALLOC(ElseStatement, elseStatement)
                 elseStatement->statements = statement_parse_body(p, is_end_of_if_body);
 
-                ElseStatementNode *node = malloc(sizeof(ElseStatementNode));
-                if (node == NULL) {
-                    UNIMPLEMENTED("statement_parse");
-                }
-
+                SAFE_MALLOC(ElseStatementNode, node)
                 node->value = elseStatement;
                 node->next = NULL;
 
@@ -213,10 +191,7 @@ bool is_end_of_for_body(Token *token) {
 }
 
 Statement for_generic_statement_parse(Parser *p, Token *_for, Symbol *symbol, Position *lastPos) {
-    SymbolNode *symbolsHead = malloc(sizeof(SymbolNode));
-    if (symbolsHead == NULL) {
-        UNIMPLEMENTED("for_generic_statement_parse");
-    }
+    SAFE_MALLOC(SymbolNode, symbolsHead)
     symbolsHead->value = symbol;
 
     SymbolNode *symbolsCurrent = symbolsHead;
@@ -234,10 +209,7 @@ Statement for_generic_statement_parse(Parser *p, Token *_for, Symbol *symbol, Po
         Symbol *symbolValue = symbol_from_token(&p->cur_token);
         parser_consume(p);
 
-        SymbolNode *node = malloc(sizeof(SymbolNode));
-        if (node == NULL) {
-            UNIMPLEMENTED("for_generic_statement_parse");
-        }
+        SAFE_MALLOC(SymbolNode, node)
 
         node->value = symbolValue;
         node->next = NULL;
@@ -289,10 +261,7 @@ Statement for_generic_statement_parse(Parser *p, Token *_for, Symbol *symbol, Po
 
     Statement statement = {0};
 
-    ForGenericLoopStatement *forGenericLoopStatement = malloc(sizeof(ForGenericLoopStatement));
-    if (forGenericLoopStatement == NULL) {
-        UNIMPLEMENTED("for_generic_statement_parse");
-    }
+    SAFE_MALLOC(ForGenericLoopStatement, forGenericLoopStatement)
 
     forGenericLoopStatement->symbols = symbolsHead;
     forGenericLoopStatement->get_iterator = getIterator;
@@ -391,10 +360,7 @@ Statement for_statement_parse(Parser *p, Token *_for) {
 
     Statement statement = {0};
 
-    ForNumericLoopStatement *forNumericLoopStatement = malloc(sizeof(ForNumericLoopStatement));
-    if (forNumericLoopStatement == NULL) {
-        UNIMPLEMENTED("for_statement_parse");
-    }
+    SAFE_MALLOC(ForNumericLoopStatement, forNumericLoopStatement)
 
     forNumericLoopStatement->symbol = symbol;
     forNumericLoopStatement->initializer = iteratorInitializer;
@@ -405,7 +371,7 @@ Statement for_statement_parse(Parser *p, Token *_for) {
     statement.type = STATEMENT_FOR_NUMERIC;
     statement.value = forNumericLoopStatement;
     statement.position = position_from_to(&_for->position, lastPos);
-    return (Statement){0};
+    return (Statement) {0};
 }
 
 bool is_end_of_do_body(Token *token) {
@@ -546,7 +512,7 @@ Statement statement_parse(Parser *p) {
         Statement child = local_statement_parse(p);
         if (child.type == STATEMENT_NONE) {
             output_unexpected_token(p, &token, "missing variable or function declaration after: %s");
-            return (Statement){0};
+            return (Statement) {0};
         }
 
         Statement statement = {0};
@@ -670,10 +636,7 @@ Statement statement_parse(Parser *p) {
 
         Statement statement = {0};
 
-        ReturnStatement *returnStatement = malloc(sizeof(ReturnStatement));
-        if (returnStatement == NULL) {
-            UNIMPLEMENTED("statement_parse");
-        }
+        SAFE_MALLOC(ReturnStatement, returnStatement)
 
         returnStatement->expression = expression;
 
@@ -706,10 +669,7 @@ Statement statement_parse(Parser *p) {
 
         Statement statement = {0};
 
-        DoStatement *doStatement = malloc(sizeof(DoStatement));
-        if (doStatement == NULL) {
-            UNIMPLEMENTED("statement_parse");
-        }
+        SAFE_MALLOC(DoStatement, doStatement)
 
         doStatement->statements = statements;
 
@@ -751,10 +711,7 @@ Statement statement_parse(Parser *p) {
 
         Statement statement = {0};
 
-        RepeatStatement *repeatStatement = malloc(sizeof(RepeatStatement));
-        if (repeatStatement == NULL) {
-            UNIMPLEMENTED("statement_parse");
-        }
+        SAFE_MALLOC(RepeatStatement, repeatStatement)
 
         repeatStatement->statements = statements;
         repeatStatement->condition = condition;
@@ -801,10 +758,7 @@ Statement statement_parse(Parser *p) {
 
         Statement statement = {0};
 
-        WhileStatement *whileStatement = malloc(sizeof(WhileStatement));
-        if (whileStatement == NULL) {
-            UNIMPLEMENTED("statement_parse");
-        }
+        SAFE_MALLOC(WhileStatement, whileStatement)
 
         whileStatement->condition = condition;
         whileStatement->statements = statements;
@@ -856,15 +810,11 @@ Statement statement_parse(Parser *p) {
     output_unexpected_token(p, &token, "%s");
     parser_consume(p);
 
-    return (Statement){0};
+    return (Statement) {0};
 }
 
 StatementNode *statement_parse_body(Parser *p, bool (*isEnd)(Token *token)) {
-    StatementNode *statementHead = malloc(sizeof(StatementNode));
-    if (statementHead == NULL) {
-        UNIMPLEMENTED("statement_parse_body");
-    }
-
+    SAFE_MALLOC(StatementNode, statementHead)
     statementHead->value = (Statement){0};
     StatementNode *statementCurrent = statementHead;
 
@@ -875,10 +825,7 @@ StatementNode *statement_parse_body(Parser *p, bool (*isEnd)(Token *token)) {
 
         Statement statement = statement_parse(p);
         if (statement.type != STATEMENT_NONE) {
-            StatementNode *node = malloc(sizeof(StatementNode));
-            if (node == NULL) {
-                UNIMPLEMENTED("statement_parse_body");
-            }
+            SAFE_MALLOC(StatementNode, node)
 
             node->value = statement;
             node->next = NULL;

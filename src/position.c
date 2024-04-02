@@ -21,9 +21,9 @@ Position position_after(Position *pos) {
 char* position_to_string(Position *pos) {
     int size = snprintf(NULL, 0, "<%zu:%zu-%zu:%zu>", pos->start_line, pos->start_column, pos->end_line, pos->end_column) + 1;
     char *buffer = malloc(size);
-    
     if (buffer == NULL) {
-        return NULL;
+        printf("%s:%d: Memory Allocation failed\n", __FILE__, __LINE__);
+        exit(1);
     }
     
     snprintf(buffer, size, "<%zu:%zu-%zu:%zu>", pos->start_line, pos->start_column, pos->end_line, pos->end_column);
