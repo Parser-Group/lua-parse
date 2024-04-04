@@ -69,31 +69,31 @@ typedef struct {
 
 //NOTE: values are the same as TokenType for performance
 typedef enum {
-    BINARY_EXPRESSION_NONE __attribute__((unused)) = 0,
+    BINARY_EXPRESSION_NONE = 0,
 
-    BINARY_EXPRESSION_BIT_OR __attribute__((unused)) = 11,
-    BINARY_EXPRESSION_BIT_AND __attribute__((unused)) = 12,
-    BINARY_EXPRESSION_BIT_SHIFT_LEFT __attribute__((unused)) = 13,
-    BINARY_EXPRESSION_BIT_SHIFT_RIGHT __attribute__((unused)) = 14,
+    BINARY_EXPRESSION_BIT_OR = 11,
+    BINARY_EXPRESSION_BIT_AND = 12,
+    BINARY_EXPRESSION_BIT_SHIFT_LEFT = 13,
+    BINARY_EXPRESSION_BIT_SHIFT_RIGHT = 14,
 
-    BINARY_EXPRESSION_EQUALS __attribute__((unused)) = 20,
-    BINARY_EXPRESSION_NOT_EQUALS __attribute__((unused)) = 21,
-    BINARY_EXPRESSION_GREATER_THAN __attribute__((unused)) = 22,
-    BINARY_EXPRESSION_GREATER_THAN_OR_EQUAL __attribute__((unused)) = 23,
-    BINARY_EXPRESSION_LESS_THAN __attribute__((unused)) = 24,
-    BINARY_EXPRESSION_LESS_THAN_OR_EQUAL __attribute__((unused)) = 25,
+    BINARY_EXPRESSION_EQUALS = 20,
+    BINARY_EXPRESSION_NOT_EQUALS = 21,
+    BINARY_EXPRESSION_GREATER_THAN = 22,
+    BINARY_EXPRESSION_GREATER_THAN_OR_EQUAL = 23,
+    BINARY_EXPRESSION_LESS_THAN = 24,
+    BINARY_EXPRESSION_LESS_THAN_OR_EQUAL = 25,
 
-    BINARY_EXPRESSION_STRING_CONCAT __attribute__((unused)) = 30,
+    BINARY_EXPRESSION_STRING_CONCAT = 30,
 
-    BINARY_EXPRESSION_PLUS __attribute__((unused)) = 41,
-    BINARY_EXPRESSION_MINUS __attribute__((unused)) = 42,
-    BINARY_EXPRESSION_MULTIPLY __attribute__((unused)) = 43,
-    BINARY_EXPRESSION_DIVIDE __attribute__((unused)) = 44,
-    BINARY_EXPRESSION_POWER __attribute__((unused)) = 45,
-    BINARY_EXPRESSION_MODULO __attribute__((unused)) = 46,
+    BINARY_EXPRESSION_PLUS = 41,
+    BINARY_EXPRESSION_MINUS = 42,
+    BINARY_EXPRESSION_MULTIPLY = 43,
+    BINARY_EXPRESSION_DIVIDE = 44,
+    BINARY_EXPRESSION_POWER = 45,
+    BINARY_EXPRESSION_MODULO = 46,
 
-    BINARY_EXPRESSION_OR __attribute__((unused)) = 50,
-    BINARY_EXPRESSION_AND __attribute__((unused)) = 51,
+    BINARY_EXPRESSION_OR = 50,
+    BINARY_EXPRESSION_AND = 51,
 } BinaryExpressionType;
 
 typedef struct {
