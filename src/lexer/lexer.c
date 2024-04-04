@@ -50,7 +50,7 @@ LiteralToken literal_tokens[] = {
         {.text = ">", .type = TOKEN_GREATER_THAN},
         {.text = "<", .type = TOKEN_LESS_THAN},
 };
-#define get_literal_tokens_count sizeof(literal_tokens)/sizeof(literal_tokens[0])
+#define get_literal_tokens_count (sizeof(literal_tokens)/sizeof(literal_tokens[0]))
 
 const char *keywords[] = {
         "and", "break", "do", "else", "elseif", "end",
@@ -59,7 +59,7 @@ const char *keywords[] = {
         "return", "then", "true", "until", "while",
         "not"
 };
-#define get_keywords_count sizeof(keywords)/sizeof(keywords[0])
+#define get_keywords_count (sizeof(keywords)/sizeof(keywords[0]))
 
 Lexer lexer_new(const char *content, size_t content_len) {
     Lexer l = {0};
@@ -76,10 +76,10 @@ CharPosition lexer_get_position(Lexer *l) {
     return pos;
 }
 
-#define lexer_peek(l) (l->content[l->cursor])
-#define lexer_peek_with_offset(l, offset) (l->content[l->cursor + offset])
-#define lexer_can_peek(l) (l->cursor < l->content_len)
-#define lexer_can_peek_with_offset(l, offset) (l->cursor + offset < l->content_len)
+#define lexer_peek(l) ((l)->content[(l)->cursor])
+#define lexer_peek_with_offset(l, offset) ((l)->content[(l)->cursor + (offset)])
+#define lexer_can_peek(l) ((l)->cursor < (l)->content_len)
+#define lexer_can_peek_with_offset(l, offset) ((l)->cursor + (offset) < (l)->content_len)
 
 bool lexer_peek_is(Lexer *l, char c) {
     if (l->cursor >= l->content_len) {
@@ -150,29 +150,18 @@ void lexer_trim_left(Lexer *l) {
     }
 }
 
-Token* multiline_string(Lexer *l, CharPosition *start_pos, Token *token, size_t count) {
+void multiline_string(Lexer *l, Token *token, CharPosition *start_pos, size_t count) {
     lexer_consume(l, count + 2);
-
-    if (lexer_peek_is(l, ']')) {
-        size_t found_count = 0;
-        for (size_t i = 0; i < count; ++i) {
-            if (!lexer_peek_is_with_offset(l, '=', 1 + i)) {
-                break;
-            }
-                
-            ++found_count;
-        }
-
-        if (found_count == count && lexer_peek_is_with_offset(l, ']', 1 + found_count)) {
-            lexer_consume(l, 2 + found_count);
-            return token;
-        }
-    }
             
     token->type = TOKEN_STRING;
     token->text = &l->content[l->cursor];
     
     while (lexer_can_peek(l)) {
+        if (lexer_peek(l) == '\\' && lexer_can_peek_with_offset(l, 1)) {
+            //TODO: handle escape sequences
+            lexer_consume(l, 1);
+        }
+        
         if (lexer_peek_is(l, ']')) {
             size_t foundCount = 0;
             for (size_t i = 0; i < count; ++i) {
@@ -194,48 +183,42 @@ Token* multiline_string(Lexer *l, CharPosition *start_pos, Token *token, size_t 
     }
     
     token->position = char_position_from_to(*start_pos, lexer_get_position(l));
-    return token;
 }
 
-Token* lexer_next(Lexer *l) {
+Token lexer_next(Lexer *l) {
     lexer_trim_left(l);
 
-    Token *token = malloc(sizeof(Token));
-    if (token == nullptr) {
-        UNIMPLEMENTED("lexer_next");
-    }
-    
-    token->position = nullptr;
-    token->text = &l->content[l->cursor];
+    Token token = {0};
+    token.text = &l->content[l->cursor];
     CharPosition start_pos = lexer_get_position(l);
     //NOTE: correcting column
     ++start_pos.column;
     
-    if (!lexer_can_peek(l)) {
-        token->type = TOKEN_END;
-        token->text_len = 0;
+    if (!lexer_can_peek(l) || lexer_peek(l) == '\0') {
+        token.type = TOKEN_END;
+        token.text_len = 0;
         return token;
     }
     
     if (isalpha(lexer_peek(l)) || lexer_peek(l) == '_') {
-        token->type = TOKEN_SYMBOL;
+        token.type = TOKEN_SYMBOL;
         
         while (lexer_can_peek(l) && (isalnum(lexer_peek(l)) || lexer_peek(l) == '_')) {
             lexer_consume(l, 1);
         }
  
-        token->text_len = &lexer_peek(l) - token->text;
+        token.text_len = &lexer_peek(l) - token.text;
 
         size_t keywords_count = get_keywords_count;
         for (size_t i = 0; i < keywords_count; ++i) {
             size_t keyword_len = strlen(keywords[i]);
-            if (keyword_len == token->text_len && memcmp(keywords[i], token->text, keyword_len) == 0) {
-                token->type = TOKEN_KEYWORD;
+            if (keyword_len == token.text_len && memcmp(keywords[i], token.text, keyword_len) == 0) {
+                token.type = TOKEN_KEYWORD;
                 break;
             }
         }
 
-        token->position = char_position_from_to(start_pos, lexer_get_position(l));
+        token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
     
@@ -249,9 +232,9 @@ Token* lexer_next(Lexer *l) {
                 lexer_consume(l, 1);
             }
 
-            token->type = TOKEN_COMMENT;
-            token->text_len = &lexer_peek(l) - token->text;
-            token->position = char_position_from_to(start_pos, lexer_get_position(l));
+            token.type = TOKEN_COMMENT;
+            token.text_len = &lexer_peek(l) - token.text;
+            token.position = char_position_from_to(start_pos, lexer_get_position(l));
 
             lexer_consume(l, 2);
             return token;
@@ -261,26 +244,30 @@ Token* lexer_next(Lexer *l) {
             lexer_consume(l, 1);
         }
         
-        token->type = TOKEN_COMMENT;
-        token->text_len = &lexer_peek(l) - token->text;
-        token->position = char_position_from_to(start_pos, lexer_get_position(l));
+        token.type = TOKEN_COMMENT;
+        token.text_len = &lexer_peek(l) - token.text;
+        token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
     
     if (lexer_can_peek(l) && (lexer_peek(l) == '\"' || lexer_peek(l) == '\'')) {
-        //TODO: handle escape sequences
         const char quoteType = lexer_peek(l);
         lexer_consume(l, 1);
         
-        token->text = &lexer_peek(l);
+        token.text = &lexer_peek(l);
         while (!lexer_peek_is(l, quoteType)) {
+            if (lexer_peek(l) == '\\' && lexer_can_peek_with_offset(l, 1)) {
+                //TODO: handle escape sequences
+                lexer_consume(l, 1);
+            }
+            
             lexer_consume(l, 1);
         }
-        token->text_len = &lexer_peek(l) - token->text;
+        token.text_len = &lexer_peek(l) - token.text;
         lexer_consume(l, 1);
         
-        token->type = TOKEN_STRING;
-        token->position = char_position_from_to(start_pos, lexer_get_position(l));
+        token.type = TOKEN_STRING;
+        token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
     
@@ -294,7 +281,8 @@ Token* lexer_next(Lexer *l) {
         }
         
         if (lexer_peek_is_with_offset(l, '[', count + 1)) {
-            return multiline_string(l, &start_pos, token, count);
+            multiline_string(l, &token, &start_pos, count);
+            return token;
         }
     }
     
@@ -338,9 +326,9 @@ Token* lexer_next(Lexer *l) {
                 }
             }
             
-            token->type = TOKEN_NUMBER;
-            token->text_len = &lexer_peek(l) - token->text;
-            token->position = char_position_from_to(start_pos, lexer_get_position(l));
+            token.type = TOKEN_NUMBER;
+            token.text_len = &lexer_peek(l) - token.text;
+            token.position = char_position_from_to(start_pos, lexer_get_position(l));
             return token;
         }
         
@@ -370,9 +358,9 @@ Token* lexer_next(Lexer *l) {
             lexer_consume(l, 1);
         }
         
-        token->type = TOKEN_NUMBER;
-        token->text_len = &lexer_peek(l) - token->text;
-        token->position = char_position_from_to(start_pos, lexer_get_position(l));
+        token.type = TOKEN_NUMBER;
+        token.text_len = &lexer_peek(l) - token.text;
+        token.position = char_position_from_to(start_pos, lexer_get_position(l));
         return token;
     }
     
@@ -383,16 +371,23 @@ Token* lexer_next(Lexer *l) {
             size_t text_len = strlen(literal_tokens[i].text);
             lexer_consume(l, text_len);
             
-            token->type = literal_tokens[i].type;
-            token->text_len = text_len;
-            token->position = char_position_from_to(start_pos, lexer_get_position(l));
+            token.type = literal_tokens[i].type;
+            token.text_len = text_len;
+            token.position = char_position_from_to(start_pos, lexer_get_position(l));
             return token;
         }
     }
-
+    
+    if (*token.text == '\0') {
+        token.type = TOKEN_END;
+        token.text_len = 0;
+        token.position = char_position_to_position(lexer_get_position(l));
+        return token;
+    }
+    
     lexer_consume(l, 1);
-    token->type = TOKEN_INVALID;
-    token->text_len = 1;
-    token->position = char_position_to_position(lexer_get_position(l));
+    token.type = TOKEN_INVALID;
+    token.text_len = 1;
+    token.position = char_position_to_position(lexer_get_position(l));
     return token;
 }

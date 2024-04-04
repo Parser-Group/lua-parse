@@ -11,6 +11,6 @@ typedef struct {
 } Lexer;
 
 Lexer lexer_new(const char *content, size_t content_len);
-Token* lexer_next(Lexer *l);
+Token lexer_next(Lexer *l);
 
 #endif //LUA_LEXER_LEXER_H

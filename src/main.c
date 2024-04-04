@@ -1,9 +1,9 @@
 #include <stdio.h>
-#include <malloc.h>
-#include <time.h>
 
 #include "lexer/lexer.h"
 #include "parser/statement.h"
+
+#include <time.h>
 
 void printOutput(Position *pos, OutputCode code, const char *message, size_t message_len) {
     char *positionStr = position_to_string(pos);
@@ -15,8 +15,15 @@ int main() {
     char *content;
     size_t content_len;
     { // load from file
-        FILE *file = fopen(".\\..\\Test.lua", "rb");
-//        FILE *file = fopen("C:\\Coding\\C#\\Lua\\FINLuaDocumentationSumneko.lua", "rb"); // bigger file size: 500KB
+//        FILE *file = fopen(".\\..\\Test.lua", "rb");
+//        FILE *file = fopen("./Test.lua", "rb"); // bigger file size: 500KB
+        
+#if linux
+        FILE *file = fopen("/mnt/c/Coding/C#/Lua/FINLuaDocumentationSumneko.lua", "rb"); // bigger file size: 500KB
+#else
+        FILE *file = fopen("C:\\Coding\\C#\\Lua\\FINLuaDocumentationSumneko.lua", "rb"); // bigger file size: 500KB
+#endif
+
         if (file == NULL) {
             printf("Error opening file.\n");
             return 1;
@@ -26,7 +33,7 @@ int main() {
         long file_size = ftell(file);
         rewind(file);
 
-        content_len = file_size;
+        content_len = file_size + 1;
         content = (char *) malloc(content_len);
         if (content == NULL) {
             printf("Memory allocation failed.\n");
@@ -51,10 +58,10 @@ int main() {
     Lexer l = lexer_new(content, content_len);
     Parser p = parser_new(&l, printOutput);
     
-    int start = clock();
+    int start = (int)clock();
     
-    Statement *statement = parser_next(&p);
-    while (statement->type != STATEMENT_END) {
+    Statement statement = parser_next(&p);
+    while (statement.type != STATEMENT_END) {
 //        printf("'%.*s' (%s)<%zu:%zu-%zu:%zu>\n",
 //               (int)t.text_len,
 //               t.text,
@@ -62,13 +69,14 @@ int main() {
 //               t.position.start_line, t.position.start_column,
 //               t.position.end_line, t.position.end_column);
 
-        free(statement);
+        statement_destroy(&statement);
         statement = parser_next(&p);
     }
 
-    int end = clock();
+    int end = (int)clock();
 
     printf("took %dms", end - start);
-    
+
+    free(content);
     return 0;
 }

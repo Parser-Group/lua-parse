@@ -93,14 +93,14 @@ const char *token_type_name(TokenType type) {
     }
 }
 
-const char *token_to_string(Token *token) {
+char *token_to_string(Token *token) {
     int size = snprintf(NULL, 0, "%.*s \'%s\'", (int)token->text_len, token->text, token_type_name(token->type)) + 1;
-    char *buffer = malloc(size);
-    
-    if (buffer == nullptr) {
-        UNIMPLEMENTED("token_to_string");
+    char *buffer = malloc(sizeof(size));
+    if ((buffer) == NULL) {
+        printf("%s:%d: Memory Allocation failed\n", __FILE__, __LINE__);
+        exit(1);
     }
-
+    
     sprintf(buffer, "%.*s \'%s\'", (int)token->text_len, token->text, token_type_name(token->type));
     return buffer;
 }

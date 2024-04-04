@@ -9,8 +9,11 @@ cmake-build-release/
 # build files on non ide
 bin/
 build/
+.cmake
 CMakeFiles/
 Makefile
 CMakeCache.txt
 cmake_install.cmake
-LuaParser.exe
+Lua_Parser
+Lua_Parser.exe
+Lua_Parser.cbp

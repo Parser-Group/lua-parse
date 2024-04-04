@@ -34,15 +34,18 @@ void output_unexpected_token(Parser *p, Token *token, const char *message) {
         return;
     }
     
-    int size = snprintf(NULL, 0, message, token_to_string(p->cur_token)) + 1;
-    char *newMessage = malloc(size);
-    if (message == nullptr) {
-        UNIMPLEMENTED("output_unexpected_token");
-    }
+    char *token_str = token_to_string(&p->cur_token);
+    int size = snprintf(NULL, 0, message, token_str) + 1;
+    char *newMessage = malloc(sizeof(size));
+    if ((newMessage) == NULL) {
+        printf("%s:%d: Memory Allocation failed\n", __FILE__, __LINE__);
+        exit(1);
+    };
     
-    sprintf(newMessage, message, token_to_string(p->cur_token));
+    sprintf(newMessage, message, token_str);
+    free(token_str);
     
-    p->onOutput(token->position, OUTPUT_UNEXPECTED_TOKEN, newMessage, size);
+    p->onOutput(&token->position, OUTPUT_UNEXPECTED_TOKEN, newMessage, size);
     free(newMessage);
 }
 OUTPUT_METHOD_IMPL(output_unexpected_keyword, OUTPUT_UNEXPECTED_KEYWORD)

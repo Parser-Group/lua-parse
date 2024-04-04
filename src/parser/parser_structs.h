@@ -35,7 +35,7 @@ const char* outputCode_to_string(OutputCode code);
 
 typedef struct {
     Lexer *lexer;
-    Token *cur_token;
+    Token cur_token;
     void (*onOutput) (Position *position, OutputCode code, const char *message, size_t message_len);
 } Parser;
 

@@ -58,12 +58,12 @@ typedef enum {
 const char *token_type_name(TokenType type);
 
 typedef struct Token {
-    Position *position;
+    Position position;
     TokenType type;
     const char *text;
     size_t text_len;
 } Token;
 
-const char *token_to_string(Token *token);
+char *token_to_string(Token *token);
 
 #endif //LUA_PARSER_TOKEN_H
