@@ -32,7 +32,7 @@ typedef struct {
 typedef struct {
     Expression expression;
     Expression index;
-} VariableAssignmentStatement;
+} AssignmentStatement;
 
 typedef struct {
     Expression condition;

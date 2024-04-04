@@ -15,14 +15,14 @@ int main() {
     char *content;
     size_t content_len;
     { // load from file
-        FILE *file = fopen(".\\..\\Test.lua", "rb");
+//        FILE *file = fopen(".\\..\\Test.lua", "rb");
 //        FILE *file = fopen("./Test.lua", "rb"); // bigger file size: 500KB
         
-//#if linux
-//        FILE *file = fopen("/mnt/c/Coding/C#/Lua/FINLuaDocumentationSumneko.lua", "rb"); // bigger file size: 500KB
-//#else
-//        FILE *file = fopen("C:\\Coding\\C#\\Lua\\FINLuaDocumentationSumneko.lua", "rb"); // bigger file size: 500KB
-//#endif
+#if linux
+        FILE *file = fopen("/mnt/c/Coding/C#/Lua/FINLuaDocumentationSumneko.lua", "rb"); // bigger file size: 500KB
+#else
+        FILE *file = fopen("C:\\Coding\\C#\\Lua\\FINLuaDocumentationSumneko.lua", "rb"); // bigger file size: 500KB
+#endif
 
         if (file == NULL) {
             printf("Error opening file.\n");
@@ -69,13 +69,14 @@ int main() {
 //               t.position.start_line, t.position.start_column,
 //               t.position.end_line, t.position.end_column);
 
-//        free(statement.value);
+        statement_destroy(&statement);
         statement = parser_next(&p);
     }
 
     int end = (int)clock();
 
     printf("took %dms", end - start);
-    
+
+    free(content);
     return 0;
 }

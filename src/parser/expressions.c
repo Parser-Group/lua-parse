@@ -11,7 +11,7 @@ Expression expression_empty() {
     return exp;
 }
 
-FunctionParameter* function_parameter_parse(Parser *p) {
+FunctionParameter *function_parameter_parse(Parser *p) {
     if (p->cur_token.type == TOKEN_KEYWORD) {
         const char *message = "unexpected keyword in parameter";
         output_unexpected_keyword(p, &p->cur_token.position, message, strlen(message));
@@ -28,98 +28,89 @@ Expression function_expression_parse(Parser *p, Token *func) {
     if (openParen.type != TOKEN_OPEN_PAREN) {
         parser_rollback(p);
         return expression_empty();
-    }
-    else {
+    } else {
         parser_consume(p);
     }
-    
+
     SAFE_MALLOC(FunctionParameterNode, parameterHead)
     parameterHead->next = NULL;
     parameterHead->value = NULL;
     FunctionParameterNode *parameterCurrent = parameterHead;
-    SAFE_MALLOC(Position , lastPos);
-    lastPos->start_line = 0;
+    Position lastPos = {0};
     while (true) {
         if (p->cur_token.type == TOKEN_SYMBOL || p->cur_token.type == TOKEN_KEYWORD) {
             FunctionParameter *parameter = function_parameter_parse(p);
 
             SAFE_MALLOC(FunctionParameterNode, node)
-            
+
             node->value = parameter;
             node->next = NULL;
 
             parameterCurrent->next = node;
             parameterCurrent = node;
             parser_consume(p);
-            
-            lastPos = &parameter->position;
-        }
-        else if (lastPos->start_line != 0) {
+
+            lastPos = parameter->position;
+        } else if (lastPos.start_line != 0) {
             const char *message = "missing symbol for function expression as parameter";
-            output_miss_symbol(p, lastPos, message, strlen(message));
+            output_miss_symbol(p, &lastPos, message, strlen(message));
         }
-        
+
         if (p->cur_token.type == TOKEN_COMMA) {
             parser_consume(p);
-            lastPos = memcpy(lastPos, &p->cur_token.position, sizeof(Position));
+            lastPos = p->cur_token.position;
             continue;
         }
-        
+
         break;
     }
-    
+
     Token closeParen = p->cur_token;
     if (closeParen.type != TOKEN_CLOSE_PAREN) {
         const char *message = "missing close parenthesis in function parameter declaration";
         output_miss_close_paren(p, &openParen.position, message, strlen(message));
-    }
-    else {
+    } else {
         parser_consume(p);
     }
-    
+
     SAFE_MALLOC(StatementNode, statementHead)
     statementHead->next = NULL;
-    statementHead->value = (Statement){0};
+    statementHead->value = (Statement) {0};
     StatementNode *statementCurrent = statementHead;
     while (true) {
         if (token_is_keyword("end", &p->cur_token) || p->cur_token.type == TOKEN_END) {
-            break;    
+            break;
         }
-        
+
         Statement statement = statement_parse(p);
         if (statement.type != STATEMENT_NONE) {
             SAFE_MALLOC(StatementNode, node)
             node->next = NULL;
             node->value = statement;
-            
+
             statementCurrent->next = node;
             statementCurrent = node;
         }
     }
-    
+
     Token end = p->cur_token;
     if (!token_is_keyword("end", &end)) {
         const char *message = "missing \"end\" to signal end of function";
         output_miss_keyword_end(p, &func->position, message, strlen(message));
-    }
-    else {
+    } else {
         parser_consume(p);
     }
-    
+
     if (token_is_keyword("end", &end)) {
-        lastPos = &end.position;
-    }
-    else if (statementCurrent->value.type != STATEMENT_NONE) {
-        lastPos = &statementCurrent->value.position;
-    }
-    else if (closeParen.type == TOKEN_CLOSE_PAREN) {
-        lastPos = &closeParen.position;
-    }
-    else if (parameterCurrent->value != NULL) {
-        lastPos = &parameterCurrent->value->position;
-    }
-    else {
-        lastPos = &openParen.position;
+        lastPos = end.position;
+    } else if (statementCurrent->value.type != STATEMENT_NONE) {
+        lastPos = statementCurrent->value.position;
+    } else if (closeParen.type == TOKEN_CLOSE_PAREN) {
+        lastPos = closeParen.position;
+    } else if (parameterCurrent->value != NULL) {
+        lastPos = parameterCurrent->value->position;
+    } else {
+        lastPos = openParen.position;
     }
     
     Expression exp;
@@ -129,10 +120,10 @@ Expression function_expression_parse(Parser *p, Token *func) {
     free(parameterHead);
     functionExpression->statements = statementHead->next;
     free(statementHead);
-    
+
     exp.type = EXPRESSION_FUNCTION;
-    exp.value = &functionExpression;
-    exp.position = position_from_to(&func->position, lastPos);
+    exp.value = functionExpression;
+    exp.position = position_from_to(&func->position, &lastPos);
     return exp;
 }
 
@@ -165,14 +156,13 @@ Expression expression_table_parse(Parser *p, Token *openBrace) {
 
             SAFE_MALLOC(TableInitializerExpressionNode, node)
 
-            TableNamedInitializerExpression expression;
-
-            expression.symbol = symbol;
-            expression.initializer = initializer;
-            expression.position = position_from_to(&symbol->position, &initializer.position);
+            SAFE_MALLOC(TableNamedInitializerExpression, tableNamedInitializerExpression)
+            tableNamedInitializerExpression->symbol = symbol;
+            tableNamedInitializerExpression->initializer = initializer;
+            tableNamedInitializerExpression->position = position_from_to(&symbol->position, &initializer.position);
 
             node->type = TABLE_INITIALIZER_NAMED;
-            node->value = &expression;
+            node->value = tableNamedInitializerExpression;
             node->next = NULL;
 
             initializerExpressionsCurrent->next = node;
@@ -236,8 +226,11 @@ Expression expression_table_parse(Parser *p, Token *openBrace) {
         if (expression.type != EXPRESSION_NONE) {
             SAFE_MALLOC(TableInitializerExpressionNode, node)
 
+            SAFE_MALLOC(Expression, expressionHeap)
+            memcpy(expressionHeap, &expression, sizeof(Expression));
+            
             node->type = TABLE_INITIALIZER_EXPRESSION;
-            node->value = &expression;
+            node->value = expressionHeap;
             node->next = NULL;
 
             initializerExpressionsCurrent->next = node;
@@ -263,12 +256,12 @@ Expression expression_table_parse(Parser *p, Token *openBrace) {
 
     Expression expression;
 
-    TableExpression tableExpression;
-    tableExpression.initializers = initializerExpressionsHead->next;
+    SAFE_MALLOC(TableExpression, tableExpression)
+    tableExpression->initializers = initializerExpressionsHead->next;
     free(initializerExpressionsHead);
 
     expression.type = EXPRESSION_TABLE;
-    expression.value = &tableExpression;
+    expression.value = tableExpression;
     expression.position = position_from_to(&openBrace->position, &closeBrace.position);
 
     return expression;
@@ -296,7 +289,7 @@ Expression binary_expression_parse(Parser *p, Expression left) {
         case TOKEN_GREATER_THAN_OR_EQUAL:
         case TOKEN_LESS_THAN:
         case TOKEN_LESS_THAN_OR_EQUAL:
-            
+
         case TOKEN_STRING_CONCAT:
             break;
 
@@ -308,58 +301,57 @@ Expression binary_expression_parse(Parser *p, Expression left) {
                 ++addToType;
                 break;
             }
-            
+
         default:
             return expression_empty();
     }
     parser_consume(p);
-    
+
     Expression right = expression_parse(p);
-    
+
     Expression exp;
     exp.type = EXPRESSION_BINARY;
     exp.position = position_from_to(&left.position, &right.position);
 
     SAFE_MALLOC(BinaryExpression, binaryExp)
-    binaryExp->type = (BinaryExpressionType)p->cur_token.type + addToType;
+    binaryExp->type = (BinaryExpressionType) p->cur_token.type + addToType;
     binaryExp->left = left;
     binaryExp->right = right;
-    
-    exp.value = &binaryExp;
+
+    exp.value = binaryExp;
     return exp;
 }
 
 Expression internal_expression_parse(Parser *p) {
     Token token = p->cur_token;
-    
+
     if (token.type == TOKEN_OPEN_PAREN) {
         parser_consume(p);
 
         Expression expValue = expression_parse(p);
-        
+
         Position *lastPos;
-        
+
         Token closeParen = p->cur_token;
         if (closeParen.type != TOKEN_CLOSE_PAREN) {
             const char *message = "missing close parenthesis for priority expression";
             output_miss_close_paren(p, &token.position, message, strlen(message));
-            
+
             lastPos = &expValue.position;
-        }
-        else {
+        } else {
             parser_consume(p);
             lastPos = &closeParen.position;
         }
 
         Expression exp;
 
-        PriorityExpression priorityExpression;
-        priorityExpression.value = expValue;
-        
+        SAFE_MALLOC(PriorityExpression, priorityExpression)
+        priorityExpression->value = expValue;
+
         exp.type = EXPRESSION_PRIORITY;
-        exp.value = &expValue;
+        exp.value = priorityExpression;
         exp.position = position_from_to(&token.position, lastPos);
-        
+
         return exp;
     }
 
@@ -377,71 +369,71 @@ Expression internal_expression_parse(Parser *p) {
 
         Expression expression;
 
-        CountExpression countExpression;
-        countExpression.expression = valueExpression;
+        SAFE_MALLOC(CountExpression, countExpression)
+        countExpression->expression = valueExpression;
 
         expression.type = EXPRESSION_COUNT;
-        expression.value = &countExpression;
+        expression.value = countExpression;
         expression.position = position_from_to(&token.position, lastPos);
 
         return expression;
     }
-    
+
     if (token.type == TOKEN_SYMBOL) {
         parser_consume(p);
-        
+
         Expression exp;
-        
-        VariableExpression varExp;
-        varExp.symbol = symbol_from_token(&token);
-        
+
+        SAFE_MALLOC(VariableExpression, varExp)
+        varExp->symbol = symbol_from_token(&token);
+
         exp.type = EXPRESSION_VARIABLE;
         exp.position = token.position;
-        exp.value = &varExp;
-        
+        exp.value = varExp;
+
         return exp;
     }
- 
+
     // literals
     if (token.type == TOKEN_NUMBER) {
         parser_consume(p);
-        
+
         Expression exp;
 
-        LiteralNumberExpression numberLiteral;
-        numberLiteral.value = strtod(token.text, NULL);
-        
+        SAFE_MALLOC(LiteralNumberExpression, numberLiteral)
+        numberLiteral->value = strtod(token.text, NULL);
+
         exp.position = token.position;
         exp.type = EXPRESSION_LITERAL_NUMBER;
-        exp.value = &numberLiteral;
+        exp.value = numberLiteral;
         return exp;
     }
-    
+
     if (token.type == TOKEN_STRING) {
         parser_consume(p);
 
         Expression exp;
 
-        LiteralStringExpression strLiteral;
-        strLiteral.value = token.text;
-        strLiteral.value_len = token.text_len;
-        
+        SAFE_MALLOC(LiteralStringExpression, strLiteral)
+        strLiteral->value = token.text;
+        strLiteral->value_len = token.text_len;
+
         exp.position = token.position;
         exp.type = EXPRESSION_LITERAL_STRING;
-        exp.value = &strLiteral;
+        exp.value = strLiteral;
         return exp;
     }
 
     if (token.type == TOKEN_OPEN_BRACE) {
         parser_consume(p);
-        
+
         return expression_table_parse(p, &token);
     }
 
     if (token.type == TOKEN_BIT_NOT) {
         parser_consume(p);
         Position *lastPos = &token.position;
-        
+
         Expression valueExpression = expression_parse(p);
         if (valueExpression.type == EXPRESSION_NONE) {
             const char *message = "missing expression after not bit \"~\" operator";
@@ -449,39 +441,39 @@ Expression internal_expression_parse(Parser *p) {
         } else {
             lastPos = &valueExpression.position;
         }
-        
+
         Expression expression;
-        
-        BitNotExpression bitNotExpression;
-        bitNotExpression.value = valueExpression;
-        
+
+        SAFE_MALLOC(BitNotExpression, bitNotExpression)
+        bitNotExpression->value = valueExpression;
+
         expression.type = EXPRESSION_BIT_NOT;
         expression.position = position_from_to(&token.position, lastPos);
-        expression.value = &bitNotExpression;
+        expression.value = bitNotExpression;
         return expression;
     }
 
     if (token_is_keyword("nil", &token)) {
         parser_consume(p);
-        
+
         Expression expression;
         expression.type = EXPRESSION_LITERAL_NIL;
         expression.position = token.position;
         expression.value = NULL;
         return expression;
     }
-    
+
     if (token_is_keyword("true", &token)) {
         parser_consume(p);
-        
+
         Expression expression;
-        
-        LiteralBooleanExpression booleanExpression;
-        booleanExpression.value = true;
-        
+
+        SAFE_MALLOC(LiteralBooleanExpression, boolean)
+        boolean->value = true;
+
         expression.position = token.position;
         expression.type = EXPRESSION_LITERAL_BOOLEAN;
-        expression.value = &booleanExpression;
+        expression.value = boolean;
         return expression;
     }
 
@@ -490,18 +482,18 @@ Expression internal_expression_parse(Parser *p) {
 
         Expression expression;
 
-        LiteralBooleanExpression booleanExpression;
-        booleanExpression.value = false;
+        SAFE_MALLOC(LiteralBooleanExpression, booleanExpression)
+        booleanExpression->value = false;
 
         expression.position = token.position;
         expression.type = EXPRESSION_LITERAL_BOOLEAN;
-        expression.value = &booleanExpression;
+        expression.value = booleanExpression;
         return expression;
     }
 
     if (token_is_keyword("not", &token)) {
         parser_consume(p);
-        
+
         Position *lastPos = &token.position;
         Expression valueExpression = expression_parse(p);
         if (valueExpression.type == EXPRESSION_NONE) {
@@ -510,30 +502,30 @@ Expression internal_expression_parse(Parser *p) {
         } else {
             lastPos = &valueExpression.position;
         }
-        
+
         Expression expression;
-        
-        NotExpression notExpression;
-        notExpression.value = valueExpression;
-        
+
+        SAFE_MALLOC(NotExpression, notExpression)
+        notExpression->value = valueExpression;
+
         expression.position = position_from_to(&token.position, lastPos);
         expression.type = EXPRESSION_NOT;
-        expression.value = &notExpression;
+        expression.value = notExpression;
         return expression;
     }
-    
+
     if (token_is_keyword("function", &token)) {
         parser_consume(p);
-        
+
         return function_expression_parse(p, &token);
     }
-    
+
     return expression_empty();
 }
 
 Expression expression_chain_parse(Parser *p, Expression first) {
-    Expression exp;
-    
+    Expression exp = {0};
+
     exp = binary_expression_parse(p, first);
     if (exp.type != EXPRESSION_NONE) {
         return exp;
@@ -552,38 +544,37 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         if (p->cur_token.type != TOKEN_CLOSE_BRACKET) {
             const char *message = "missing close bracket after index expression";
             output_miss_close_bracket(p, &token.position, message, strlen(message));
-        }
-        else {
+        } else {
             parser_consume(p);
         }
-        
-        VariableIndexExpression varExp;
-        varExp.first = &first;
-        varExp.index = index;
-        
+
+        SAFE_MALLOC(VariableIndexExpression, varExp)
+        varExp->first = first;
+        varExp->index = index;
+
         exp.type = EXPRESSION_VARIABLE_INDEX;
-        exp.position = position_from_to(&first.position, &varExp.index.position);
-        exp.value = &varExp;
+        exp.position = position_from_to(&first.position, &varExp->index.position);
+        exp.value = varExp;
 
         return exp;
     }
-    
+
     if (token.type == TOKEN_DOT) {
         parser_consume(p);
-        
+
         if (p->cur_token.type == TOKEN_SYMBOL) {
             SAFE_MALLOC(VariableNameIndexExpression, varExp)
-            varExp->first = &first;
+            varExp->first = first;
             varExp->index = symbol_from_token(&p->cur_token);
-        
+
             exp.type = EXPRESSION_VARIABLE_NAME_INDEX;
             exp.position = position_from_to(&first.position, &p->cur_token.position);
-            exp.value = &varExp;
+            exp.value = varExp;
 
             parser_consume(p);
             return exp;
         }
-        
+
         const char *message = "missing symbol after dot";
         output_miss_symbol(p, &token.position, message, strlen(message));
         return expression_empty();
@@ -594,7 +585,7 @@ Expression expression_chain_parse(Parser *p, Expression first) {
 
         if (p->cur_token.type == TOKEN_SYMBOL) {
             SAFE_MALLOC(VariableNameIndexWithSelfExpression, varExp)
-            varExp->first = &first;
+            varExp->first = first;
             varExp->index = symbol_from_token(&p->cur_token);
 
             exp.type = EXPRESSION_VARIABLE_NAME_INDEX_WITH_SELF;
@@ -612,7 +603,7 @@ Expression expression_chain_parse(Parser *p, Expression first) {
 
     if (token.type == TOKEN_OPEN_PAREN) {
         parser_consume(p);
-        
+
         SAFE_MALLOC(ExpressionNode, expressionHead)
         expressionHead->value = NULL;
         ExpressionNode *expressionCurrent = expressionHead;
@@ -624,15 +615,14 @@ Expression expression_chain_parse(Parser *p, Expression first) {
 
                 node->value = &expValue;
                 node->next = NULL;
-                
+
                 expressionCurrent->next = node;
                 expressionCurrent = node;
-            }
-            else if (lastPos != NULL && lastPos->start_line != 0) {
+            } else if (lastPos != NULL && lastPos->start_line != 0) {
                 const char *message = "missing expression as function argument";
                 output_miss_expression(p, lastPos, message, strlen(message));
             }
-            
+
             if (p->cur_token.type != TOKEN_COMMA) {
                 break;
             }
@@ -644,35 +634,24 @@ Expression expression_chain_parse(Parser *p, Expression first) {
             const char *message = "missing close parenthesis for function call";
             Position posAfter = position_after(lastPos);
             output_miss_close_paren(p, &posAfter, message, strlen(message));
-        }
-        else {
+        } else {
             lastPos = &p->cur_token.position;
             parser_consume(p);
         }
-        
+
         Expression expression;
-        
-        FunctionCallExpression functionCallExpression;
-        functionCallExpression.arguments = expressionHead->next;
+
+        SAFE_MALLOC(FunctionCallExpression, functionCallExpression)
+        functionCallExpression->arguments = expressionHead->next;
         free(expressionHead);
-        functionCallExpression.index = first;
-        
+        functionCallExpression->index = first;
+
         expression.type = EXPRESSION_FUNCTION_CALL;
-        expression.value = &functionCallExpression;
+        expression.value = functionCallExpression;
         expression.position = position_from_to(&first.position, lastPos);
         return expression;
     }
 
-//    if (token_is_keyword("and", &token)) {
-//        parser_consume(p);
-//        
-//        Expression right = expression_parse(p);
-//        if (right.type == EXPRESSION_NONE) {
-//            const char *message = "missing right side of expression";
-//        }
-//        
-//    }
-    
     return exp;
 }
 
@@ -681,7 +660,7 @@ Expression expression_parse(Parser *p) {
     if (exp.type == EXPRESSION_NONE) {
         return exp;
     }
-    
+
     while (true) {
         Expression newExp = expression_chain_parse(p, exp);
         if (newExp.type == EXPRESSION_NONE) {
@@ -689,4 +668,155 @@ Expression expression_parse(Parser *p) {
         }
         exp = newExp;
     }
+}
+
+void expression_destroy(Expression *expression) {
+    switch (expression->type) {
+        case EXPRESSION_NONE:
+
+        case EXPRESSION_LITERAL_NIL:
+
+            break;
+
+        case EXPRESSION_PRIORITY:
+        case EXPRESSION_NOT:
+        case EXPRESSION_BIT_NOT:
+        case EXPRESSION_COUNT:
+
+        case EXPRESSION_LITERAL_BOOLEAN:
+        case EXPRESSION_LITERAL_NUMBER:
+        case EXPRESSION_LITERAL_STRING:
+
+        case EXPRESSION_VARIABLE_INDEX:
+
+        case EXPRESSION_BINARY:
+
+            free(expression->value);
+            break;
+
+        case EXPRESSION_VARIABLE: {
+            VariableExpression *variableExpression = expression->value;
+            free(variableExpression->symbol);
+            free(variableExpression);
+
+            break;
+        }
+        case EXPRESSION_VARIABLE_NAME_INDEX: {
+            VariableNameIndexExpression *variableNameIndexExpression = expression->value;
+
+            expression_destroy(&variableNameIndexExpression->first);
+            if (variableNameIndexExpression->index != NULL) {
+                free(variableNameIndexExpression->index);
+            }
+            
+            free(variableNameIndexExpression);
+
+            break;
+        }
+        case EXPRESSION_VARIABLE_NAME_INDEX_WITH_SELF: {
+            VariableNameIndexWithSelfExpression *variableNameIndexWithSelfExpression = expression->value;
+
+            expression_destroy(&variableNameIndexWithSelfExpression->first);
+            free(variableNameIndexWithSelfExpression->index);
+            
+            free(variableNameIndexWithSelfExpression);
+
+            break;
+        }
+
+        case EXPRESSION_FUNCTION_CALL: {
+            FunctionCallExpression *functionCallExpression = expression->value;
+
+            if (functionCallExpression->arguments != NULL) {
+                ExpressionNode *node = functionCallExpression->arguments;
+                while (node != NULL) {
+                    { expression_destroy(node->value); };
+                    ExpressionNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            free(functionCallExpression);
+
+            break;
+        }
+        case EXPRESSION_FUNCTION: {
+            FunctionExpression *functionExpression = expression->value;
+
+            if (functionExpression->parameters != NULL) {
+                FunctionParameterNode *node = functionExpression->parameters;
+                while (node != NULL) {
+                    {
+                        FunctionParameter *functionParameter = node->value;
+                        free(functionParameter->name);
+                        free(functionParameter);
+                    };
+                    FunctionParameterNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            if (functionExpression->statements != NULL) {
+                StatementNode *node = functionExpression->statements;
+                while (node != NULL) {
+                    { statement_destroy(&node->value); };
+                    StatementNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            free(functionExpression);
+
+            break;
+        }
+        case EXPRESSION_TABLE: {
+            TableExpression *tableExpression = expression->value;
+
+            TableInitializerExpressionNode *node = tableExpression->initializers;
+            while (node != NULL) {
+                {
+                    switch (node->type) {
+                        case TABLE_INITIALIZER_NONE:
+                            break;
+                        
+                        case TABLE_INITIALIZER_NAMED:
+                        {
+                            TableNamedInitializerExpression *tableNamedInitializerExpression = node->value;
+
+                            expression_destroy(&tableNamedInitializerExpression->initializer);
+                            free(tableNamedInitializerExpression->symbol);
+                            
+                            free(tableNamedInitializerExpression);
+                            
+                            break;
+                        }
+                        
+                        case TABLE_INITIALIZER_INDEX:
+                        case TABLE_INITIALIZER_EXPRESSION:
+                            
+                            free(node->value);
+                            break;
+                    }
+                };
+                TableInitializerExpressionNode *nextNode = node->next;
+                free(node);
+                node = nextNode;
+            }
+
+            free(tableExpression);
+
+            break;
+        }
+
+        default:
+        UNIMPLEMENTED("expression_destroy")
+    }
+
+    //NOTE: could be removed since it is not needed
+    expression->type = EXPRESSION_NONE;
+    expression->position = (Position) {0};
+    expression->value = NULL;
 }

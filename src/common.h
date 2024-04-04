@@ -27,13 +27,4 @@
         exit(1); \
     }
 
-#define SAFE_MALLOC_TO(ptr, size) \
-    ptr = malloc(size); \
-    if ((ptr) == NULL) { \
-        do { \
-            printf("%s:%d: Memory Allocation failed\n", __FILE__, __LINE__); \
-            exit(1); \
-        } while(0); \
-    }
-
 #endif //LUA_PARSER_COMMON_H

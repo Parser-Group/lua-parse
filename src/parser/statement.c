@@ -20,17 +20,17 @@ Statement local_statement_parse(Parser *p) {
         }
 
         Expression indexExpression = {0};
-        
+
         SAFE_MALLOC(VariableExpression, variableExpression)
         variableExpression->symbol = symbol_from_token(&funcName);
-        
+
         indexExpression.type = EXPRESSION_VARIABLE;
         indexExpression.position = variableExpression->symbol->position;
         indexExpression.value = variableExpression;
 
         Statement statement = {0};
 
-        SAFE_MALLOC(FunctionDeclaration, functionDeclaration);
+        SAFE_MALLOC(FunctionDeclaration, functionDeclaration)
         functionDeclaration->expression = function_expression_parse(p, &func);
         functionDeclaration->index = indexExpression;
 
@@ -48,33 +48,37 @@ Statement local_statement_parse(Parser *p) {
         if (equal.type != TOKEN_EQUAL) {
             Statement statement = {0};
 
-            VariableDeclaration variableDeclaration;
-            variableDeclaration.initializer = NULL;
-            variableDeclaration.symbol = symbol_from_token(&symbol);
+            SAFE_MALLOC(VariableDeclaration, variableDeclaration)
+            variableDeclaration->initializer = NULL;
+            variableDeclaration->symbol = symbol_from_token(&symbol);
 
             statement.position = symbol.position;
             statement.type = STATEMENT_VARIABLE_DECLARATION;
-            statement.value = &variableDeclaration;
+            statement.value = variableDeclaration;
             return statement;
         } else {
             parser_consume(p);
         }
 
-        Expression initializer = expression_parse(p);
-        if (initializer.type == EXPRESSION_NONE) {
-            const char *message = "missing expression as initializer for variable declaration";
-            output_miss_expression(p, &equal.position, message, strlen(message));
+        SAFE_MALLOC(Expression, initializer);
+        {
+            Expression initializerStack = expression_parse(p);
+            if (initializerStack.type == EXPRESSION_NONE) {
+                const char *message = "missing expression as initializer for variable declaration";
+                output_miss_expression(p, &equal.position, message, strlen(message));
+            }
+            memcpy(initializer, &initializerStack, sizeof(Expression));
         }
 
         Statement statement = {0};
 
-        VariableDeclaration variableDeclaration;
-        variableDeclaration.initializer = &initializer;
-        variableDeclaration.symbol = symbol_from_token(&symbol);
+        SAFE_MALLOC(VariableDeclaration, variableDeclaration)
+        variableDeclaration->initializer = initializer;
+        variableDeclaration->symbol = symbol_from_token(&symbol);
 
-        statement.position = position_from_to(&symbol.position, &initializer.position);
+        statement.position = position_from_to(&symbol.position, &initializer->position);
         statement.type = STATEMENT_VARIABLE_DECLARATION;
-        statement.value = &variableDeclaration;
+        statement.value = variableDeclaration;
         return statement;
     }
 
@@ -172,16 +176,16 @@ Statement if_statement_parse(Parser *p, Token *_if) {
 
     Statement statement = {0};
 
-    IfStatement _ifStatement;
-    _ifStatement.condition = condition;
-    _ifStatement.if_body = ifBodyStatements;
-    _ifStatement.else_if_body_nodes = elseIfBodyStatementsHead->next;
+    SAFE_MALLOC(IfStatement, _ifStatement)
+    _ifStatement->condition = condition;
+    _ifStatement->if_body = ifBodyStatements;
+    _ifStatement->else_if_body_nodes = elseIfBodyStatementsHead->next;
     free(elseIfBodyStatementsHead);
-    _ifStatement.else_body_nodes = elseBodyStatementsHead->next;
+    _ifStatement->else_body_nodes = elseBodyStatementsHead->next;
     free(elseBodyStatementsHead);
 
     statement.type = STATEMENT_IF;
-    statement.value = &_ifStatement;
+    statement.value = _ifStatement;
     statement.position = position_from_to(&_if->position, &end.position);
     return statement;
 }
@@ -325,11 +329,11 @@ Statement for_statement_parse(Parser *p, Token *_for) {
 
         increment = expression_parse(p);
     } else {
-        LiteralNumberExpression literalNumberExpression;
-        literalNumberExpression.value = 1;
+        SAFE_MALLOC(LiteralNumberExpression, literalNumberExpression)
+        literalNumberExpression->value = 1;
 
         increment.type = EXPRESSION_LITERAL_NUMBER;
-        increment.value = &literalNumberExpression;
+        increment.value = literalNumberExpression;
     }
 
     Token _do = p->cur_token;
@@ -394,18 +398,19 @@ Statement statement_parse(Parser *p) {
             Symbol *symbol = symbol_from_token(&p->cur_token);
             parser_consume(p);
 
-            VariableExpression variableExpression;
-            variableExpression.symbol = symbol;
+            SAFE_MALLOC(VariableExpression, variableExpression)
+            variableExpression->symbol = symbol;
 
             index.type = EXPRESSION_VARIABLE;
             index.position = symbol->position;
-            index.value = &variableExpression;
+            index.value = variableExpression;
         }
 
         while (true) {
             if (p->cur_token.type == TOKEN_DOT) {
                 Token dot = p->cur_token;
                 parser_consume(p);
+                Position *lastPos = &dot.position;
 
                 Symbol *symbol = NULL;
                 if (p->cur_token.type != TOKEN_SYMBOL) {
@@ -414,17 +419,18 @@ Statement statement_parse(Parser *p) {
                 } else {
                     symbol = symbol_from_token(&p->cur_token);
                     parser_consume(p);
+                    lastPos = &symbol->position;
                 }
 
                 Expression valueExpression;
 
-                VariableNameIndexExpression variableNameIndexExpression;
-                variableNameIndexExpression.first = &index;
-                variableNameIndexExpression.index = symbol;
+                SAFE_MALLOC(VariableNameIndexExpression, variableNameIndexExpression)
+                variableNameIndexExpression->first = index;
+                variableNameIndexExpression->index = symbol;
 
                 valueExpression.type = EXPRESSION_VARIABLE_NAME_INDEX;
-                valueExpression.position = symbol->position;
-                valueExpression.value = &variableNameIndexExpression;
+                valueExpression.position = position_from_to(&index.position, lastPos);
+                valueExpression.value = variableNameIndexExpression;
 
                 index = valueExpression;
                 continue;
@@ -451,28 +457,30 @@ Statement statement_parse(Parser *p) {
 
             Statement statement = {0};
 
-            VariableAssignmentStatement variableAssignmentStatement;
-            variableAssignmentStatement.expression = exp;
-            variableAssignmentStatement.index = index;
+            SAFE_MALLOC(AssignmentStatement, variableAssignmentStatement)
+            variableAssignmentStatement->expression = exp;
+            variableAssignmentStatement->index = index;
 
             statement.type = STATEMENT_ASSIGNMENT;
-            statement.value = &variableAssignmentStatement;
+            statement.value = variableAssignmentStatement;
             statement.position = position_from_to(&token.position, lastPos);
             return statement;
         }
 
-        Expression expression = expression_chain_parse(p, index);
-
-        if (expression.type != EXPRESSION_FUNCTION_CALL) {
-            const char *message = "unexpected expression as statement";
-            output_unexpected_expression(p, &expression.position, message, strlen(message));
+        SAFE_MALLOC(Expression, expression);
+        {
+            Expression expressionStack = expression_chain_parse(p, index);
+            if (expressionStack.type != EXPRESSION_FUNCTION_CALL) {
+                const char *message = "unexpected expression as statement";
+                output_unexpected_expression(p, &expressionStack.position, message, strlen(message));
+            }
+            memcpy(expression, &expressionStack, sizeof(Expression));
         }
-
         Statement statement = {0};
 
         statement.type = STATEMENT_EXPRESSION;
-        statement.value = &expression;
-        statement.position = expression.position;
+        statement.value = expression;
+        statement.position = expression->position;
         return statement;
     }
 
@@ -517,11 +525,11 @@ Statement statement_parse(Parser *p) {
 
         Statement statement = {0};
 
-        LocalStatement local_statement;
-        local_statement.child = child;
+        SAFE_MALLOC(LocalStatement, localStatement)
+        localStatement->child = child;
 
         statement.type = STATEMENT_LOCAL;
-        statement.value = &local_statement;
+        statement.value = localStatement;
         statement.position = position_from_to(&token.position, &child.position);
         return statement;
     }
@@ -540,18 +548,24 @@ Statement statement_parse(Parser *p) {
                 parser_consume(p);
             }
 
-            VariableExpression variableExpression;
-            variableExpression.symbol = symbol;
+            SAFE_MALLOC(VariableExpression, variableExpression)
+            variableExpression->symbol = symbol;
 
             index.type = EXPRESSION_VARIABLE;
-            index.position = symbol->position;
-            index.value = &variableExpression;
+            index.value = variableExpression;
+
+            if (symbol == NULL) {
+                index.position = (Position) {0};
+            } else {
+                index.position = symbol->position;
+            }
         }
 
         while (true) {
             if (p->cur_token.type == TOKEN_DOT) {
                 Token dot = p->cur_token;
                 parser_consume(p);
+                Position *lastPos = &dot.position;
 
                 Symbol *symbol = NULL;
                 if (p->cur_token.type != TOKEN_SYMBOL) {
@@ -560,17 +574,18 @@ Statement statement_parse(Parser *p) {
                 } else {
                     symbol = symbol_from_token(&p->cur_token);
                     parser_consume(p);
+                    lastPos = &symbol->position;
                 }
 
                 Expression valueExpression;
 
-                VariableNameIndexExpression variableNameIndexExpression;
-                variableNameIndexExpression.first = &index;
-                variableNameIndexExpression.index = symbol;
+                SAFE_MALLOC(VariableNameIndexExpression, variableNameIndexExpression)
+                variableNameIndexExpression->first = index;
+                variableNameIndexExpression->index = symbol;
 
                 valueExpression.type = EXPRESSION_VARIABLE_NAME_INDEX;
-                valueExpression.position = symbol->position;
-                valueExpression.value = &variableNameIndexExpression;
+                valueExpression.position = position_from_to(&index.position, lastPos);
+                valueExpression.value = variableNameIndexExpression;
 
                 index = valueExpression;
                 continue;
@@ -579,6 +594,7 @@ Statement statement_parse(Parser *p) {
             if (p->cur_token.type == TOKEN_COLON) {
                 Token colon = p->cur_token;
                 parser_consume(p);
+                Position *lastPos = &colon.position;
 
                 Symbol *symbol = NULL;
                 if (p->cur_token.type != TOKEN_SYMBOL) {
@@ -587,17 +603,18 @@ Statement statement_parse(Parser *p) {
                 } else {
                     symbol = symbol_from_token(&p->cur_token);
                     parser_consume(p);
+                    lastPos = &symbol->position;
                 }
 
                 Expression valueExpression;
 
-                VariableNameIndexWithSelfExpression variableNameIndexWithSelfExpression;
-                variableNameIndexWithSelfExpression.first = &index;
-                variableNameIndexWithSelfExpression.index = symbol;
+                SAFE_MALLOC(VariableNameIndexWithSelfExpression, variableNameIndexWithSelfExpression)
+                variableNameIndexWithSelfExpression->first = index;
+                variableNameIndexWithSelfExpression->index = symbol;
 
                 valueExpression.type = EXPRESSION_VARIABLE_NAME_INDEX_WITH_SELF;
-                valueExpression.position = symbol->position;
-                valueExpression.value = &variableNameIndexWithSelfExpression;
+                valueExpression.position = position_from_to(&index.position, lastPos);
+                valueExpression.value = variableNameIndexWithSelfExpression;
 
                 index = valueExpression;
             }
@@ -607,13 +624,13 @@ Statement statement_parse(Parser *p) {
 
         Statement statement = {0};
 
-        FunctionDeclaration functionDeclaration;
-        functionDeclaration.expression = function_expression_parse(p, &token);
-        functionDeclaration.index = index;
+        SAFE_MALLOC(FunctionDeclaration, functionDeclaration)
+        functionDeclaration->expression = function_expression_parse(p, &token);
+        functionDeclaration->index = index;
 
         statement.type = STATEMENT_FUNCTION_DECLARATION;
-        statement.value = &functionDeclaration;
-        statement.position = position_from_to(&token.position, &functionDeclaration.expression.position);
+        statement.value = functionDeclaration;
+        statement.position = position_from_to(&token.position, &functionDeclaration->expression.position);
         return statement;
     }
 
@@ -637,7 +654,6 @@ Statement statement_parse(Parser *p) {
         Statement statement = {0};
 
         SAFE_MALLOC(ReturnStatement, returnStatement)
-
         returnStatement->expression = expression;
 
         statement.type = STATEMENT_RETURN;
@@ -815,7 +831,7 @@ Statement statement_parse(Parser *p) {
 
 StatementNode *statement_parse_body(Parser *p, bool (*isEnd)(Token *token)) {
     SAFE_MALLOC(StatementNode, statementHead)
-    statementHead->value = (Statement){0};
+    statementHead->value = (Statement) {0};
     StatementNode *statementCurrent = statementHead;
 
     while (true) {
@@ -838,4 +854,251 @@ StatementNode *statement_parse_body(Parser *p, bool (*isEnd)(Token *token)) {
     statementCurrent = statementHead->next;
     free(statementHead);
     return statementCurrent;
+}
+
+void statement_destroy(Statement *statement) {
+
+    switch (statement->type) {
+        case STATEMENT_NONE:
+        case STATEMENT_END:
+
+        case STATEMENT_DO: {
+            DoStatement *doStatement = statement->value;
+
+            if (doStatement->statements != NULL) {
+                StatementNode *node = doStatement->statements;
+                while (node != NULL) {
+                    { statement_destroy(&node->value); };
+                    StatementNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            };
+
+            free(doStatement);
+
+            break;
+        }
+
+        case STATEMENT_LOCAL: {
+            LocalStatement *localStatement = statement->value;
+
+            statement_destroy(&localStatement->child);
+
+            free(localStatement);
+
+            break;
+        }
+
+        case STATEMENT_VARIABLE_DECLARATION: {
+            VariableDeclaration *variableDeclaration = statement->value;
+
+            if (variableDeclaration->initializer != NULL) {
+                expression_destroy(variableDeclaration->initializer);
+            }
+            if (variableDeclaration->symbol != NULL) {
+                free(variableDeclaration->symbol);
+            }
+
+            free(variableDeclaration);
+
+            break;
+        }
+        case STATEMENT_FUNCTION_DECLARATION: {
+            FunctionDeclaration *functionDeclaration = statement->value;
+
+            expression_destroy(&functionDeclaration->expression);
+            expression_destroy(&functionDeclaration->index);
+
+            free(functionDeclaration);
+
+            break;
+        }
+
+        case STATEMENT_RETURN: {
+            ReturnStatement *returnStatement = statement->value;
+
+            expression_destroy(&returnStatement->expression);
+
+            free(returnStatement);
+
+            break;
+        }
+
+        case STATEMENT_ASSIGNMENT: {
+            AssignmentStatement *assignmentStatement = statement->value;
+
+            expression_destroy(&assignmentStatement->expression);
+            expression_destroy(&assignmentStatement->index);
+
+            free(assignmentStatement);
+
+            break;
+        }
+
+        case STATEMENT_IF: {
+            IfStatement *ifStatement = statement->value;
+
+            if (ifStatement->if_body != NULL) {
+                StatementNode *node = ifStatement->if_body;
+                while (node != NULL) {
+                    {
+                        statement_destroy(&node->value);
+                    };
+                    StatementNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            if (ifStatement->else_if_body_nodes != NULL) {
+                ElseIfStatementNode *node = ifStatement->else_if_body_nodes;
+                while (node != NULL) {
+                    {
+                        ElseIfStatement *elseIfStatement = node->value;
+                        if (elseIfStatement->statements != NULL) {
+                            StatementNode *node2 = elseIfStatement->statements;
+                            while (node2 != NULL) {
+                                { statement_destroy(&node2->value); };
+                                StatementNode *nextNode = node2->next;
+                                free(node2);
+                                node2 = nextNode;
+                            }
+                        }
+                        expression_destroy(&elseIfStatement->condition);
+                    };
+                    ElseIfStatementNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            if (ifStatement->else_body_nodes != NULL) {
+                ElseStatementNode *node = ifStatement->else_body_nodes;
+                while (node != NULL) {
+                    {
+                        ElseStatement *elseStatement = node->value;
+                        if (elseStatement->statements != NULL) {
+                            StatementNode *node2 = elseStatement->statements;
+                            while (node2 != NULL) {
+                                { statement_destroy(&node2->value); };
+                                StatementNode *nextNode = node2->next;
+                                free(node2);
+                                node2 = nextNode;
+                            }
+                        }
+                    };
+                    ElseStatementNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            free(ifStatement);
+
+            break;
+        }
+
+
+        case STATEMENT_EXPRESSION:
+            expression_destroy(statement->value);
+            break;
+
+        case STATEMENT_GOTO_POINT:
+        case STATEMENT_GOTO:
+            // freeing symbol reference
+            free(statement->value);
+            break;
+            
+        case STATEMENT_BREAK:
+            break;
+
+        case STATEMENT_FOR_NUMERIC: {
+            ForNumericLoopStatement *forNumericLoopStatement = statement->value;
+
+            if (forNumericLoopStatement->statements != NULL) {
+                StatementNode *node = forNumericLoopStatement->statements;
+                while (node != NULL) {
+                    { statement_destroy(&node->value); };
+                    StatementNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            free(forNumericLoopStatement->symbol);
+            free(forNumericLoopStatement);
+
+            break;
+        }
+
+        case STATEMENT_FOR_GENERIC: {
+            ForGenericLoopStatement *forGenericLoopStatement = statement->value;
+
+            if (forGenericLoopStatement->statements != NULL) {
+                StatementNode *node = forGenericLoopStatement->statements;
+                while (node != NULL) {
+                    { statement_destroy(&node->value); };
+                    StatementNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            if (forGenericLoopStatement->symbols != NULL) {
+                SymbolNode *node = forGenericLoopStatement->symbols;
+                while (node != NULL) {
+                    { free(node->value); };
+                    SymbolNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            };
+
+            free(forGenericLoopStatement);
+
+            break;
+        }
+
+        case STATEMENT_REPEAT: {
+            RepeatStatement *repeatStatement = statement->value;
+
+            if (repeatStatement->statements != NULL) {
+                StatementNode *node = repeatStatement->statements;
+                while (node != NULL) {
+                    { statement_destroy(&node->value); };
+                    StatementNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            };
+
+            free(repeatStatement);
+
+            break;
+        }
+
+        case STATEMENT_WHILE: {
+            WhileStatement *whileStatement = statement->value;
+
+            if (whileStatement->statements != NULL) {
+                StatementNode *node = whileStatement->statements;
+                while (node != NULL) {
+                    { statement_destroy(&node->value); };
+                    StatementNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            free(whileStatement);
+
+            break;
+        }
+    }
+
+    //NOTE: could be removed since it is not needed
+    statement->type = STATEMENT_NONE;
+    statement->position = (Position) {0};
+    statement->value = NULL;
 }

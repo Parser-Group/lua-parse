@@ -107,17 +107,17 @@ typedef struct {
 } VariableExpression;
 
 typedef struct {
-    Expression *first;
+    Expression first;
     Symbol *index;
 } VariableNameIndexExpression;
 
 typedef struct {
-    Expression *first;
+    Expression first;
     Symbol *index;
 } VariableNameIndexWithSelfExpression;
 
 typedef struct {
-    Expression *first;
+    Expression first;
     Expression index;
 } VariableIndexExpression;
 

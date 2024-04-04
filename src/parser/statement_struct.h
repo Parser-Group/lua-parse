@@ -40,4 +40,6 @@ typedef struct StatementNode {
     Statement value;
 } StatementNode;
 
+void statement_destroy(Statement *statement);
+
 #endif //LUA_PARSER_STATEMENT_STRUCT_H
