@@ -375,7 +375,7 @@ Statement for_statement_parse(Parser *p, Token *_for) {
     statement.type = STATEMENT_FOR_NUMERIC;
     statement.value = forNumericLoopStatement;
     statement.position = position_from_to(&_for->position, lastPos);
-    return (Statement) {0};
+    return statement;
 }
 
 bool is_end_of_do_body(Token *token) {
@@ -523,11 +523,10 @@ Statement statement_parse(Parser *p) {
             return (Statement) {0};
         }
 
-        Statement statement = {0};
-
         SAFE_MALLOC(LocalStatement, localStatement)
         localStatement->child = child;
 
+        Statement statement = {0};
         statement.type = STATEMENT_LOCAL;
         statement.value = localStatement;
         statement.position = position_from_to(&token.position, &child.position);
@@ -861,7 +860,8 @@ void statement_destroy(Statement *statement) {
     switch (statement->type) {
         case STATEMENT_NONE:
         case STATEMENT_END:
-
+            break;
+            
         case STATEMENT_DO: {
             DoStatement *doStatement = statement->value;
 
@@ -895,11 +895,12 @@ void statement_destroy(Statement *statement) {
 
             if (variableDeclaration->initializer != NULL) {
                 expression_destroy(variableDeclaration->initializer);
+                free(variableDeclaration->initializer);
             }
             if (variableDeclaration->symbol != NULL) {
                 free(variableDeclaration->symbol);
             }
-
+            
             free(variableDeclaration);
 
             break;
@@ -965,7 +966,9 @@ void statement_destroy(Statement *statement) {
                                 node2 = nextNode;
                             }
                         }
+                        
                         expression_destroy(&elseIfStatement->condition);
+                        free(elseIfStatement);
                     };
                     ElseIfStatementNode *nextNode = node->next;
                     free(node);
@@ -987,6 +990,7 @@ void statement_destroy(Statement *statement) {
                                 node2 = nextNode;
                             }
                         }
+                        free(elseStatement);
                     };
                     ElseStatementNode *nextNode = node->next;
                     free(node);
@@ -994,6 +998,8 @@ void statement_destroy(Statement *statement) {
                 }
             }
 
+            expression_destroy(&ifStatement->condition);
+            
             free(ifStatement);
 
             break;
@@ -1002,6 +1008,7 @@ void statement_destroy(Statement *statement) {
 
         case STATEMENT_EXPRESSION:
             expression_destroy(statement->value);
+            free(statement->value);
             break;
 
         case STATEMENT_GOTO_POINT:
@@ -1025,6 +1032,10 @@ void statement_destroy(Statement *statement) {
                     node = nextNode;
                 }
             }
+
+            expression_destroy(&forNumericLoopStatement->initializer);
+            expression_destroy(&forNumericLoopStatement->condition);
+            expression_destroy(&forNumericLoopStatement->increment);
 
             free(forNumericLoopStatement->symbol);
             free(forNumericLoopStatement);
@@ -1055,6 +1066,8 @@ void statement_destroy(Statement *statement) {
                 }
             };
 
+            expression_destroy(&forGenericLoopStatement->get_iterator);
+            
             free(forGenericLoopStatement);
 
             break;
@@ -1073,6 +1086,8 @@ void statement_destroy(Statement *statement) {
                 }
             };
 
+            expression_destroy(&repeatStatement->condition);
+            
             free(repeatStatement);
 
             break;
@@ -1091,6 +1106,8 @@ void statement_destroy(Statement *statement) {
                 }
             }
 
+            expression_destroy(&whileStatement->condition);
+            
             free(whileStatement);
 
             break;
