@@ -2,7 +2,6 @@
 #define LUA_PARSER_EXPRESSION_STRUCTS_H
 
 #include "position.h"
-#include "symbol.h"
 #include "statement_struct.h"
 
 typedef enum {
@@ -103,17 +102,17 @@ typedef struct {
 } BinaryExpression;
 
 typedef struct {
-    Symbol *symbol;
+    Token symbol;
 } VariableExpression;
 
 typedef struct {
     Expression first;
-    Symbol *index;
+    Token index;
 } VariableNameIndexExpression;
 
 typedef struct {
     Expression first;
-    Symbol *index;
+    Token index;
 } VariableNameIndexWithSelfExpression;
 
 typedef struct {
@@ -123,7 +122,7 @@ typedef struct {
 
 typedef struct {
     Position position;
-    Symbol *name;
+    Token name;
 } FunctionParameter;
 
 typedef struct FunctionParameterNode {
@@ -143,7 +142,7 @@ typedef struct {
 
 typedef struct {
     Position position;
-    Symbol *symbol;
+    Token symbol;
     Expression initializer;
 } TableNamedInitializerExpression;
 

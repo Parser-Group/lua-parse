@@ -64,6 +64,11 @@ typedef struct Token {
     size_t text_len;
 } Token;
 
+typedef struct TokenNode {
+    struct TokenNode *next;
+    Token value;
+} TokenNode;
+
 char *token_to_string(Token *token);
 
 #endif //LUA_PARSER_TOKEN_H

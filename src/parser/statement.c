@@ -22,10 +22,10 @@ Statement local_statement_parse(Parser *p) {
         Expression indexExpression = {0};
 
         SAFE_MALLOC(VariableExpression, variableExpression)
-        variableExpression->symbol = symbol_from_token(&funcName);
+        variableExpression->symbol = funcName;
 
         indexExpression.type = EXPRESSION_VARIABLE;
-        indexExpression.position = variableExpression->symbol->position;
+        indexExpression.position = variableExpression->symbol.position;
         indexExpression.value = variableExpression;
 
         Statement statement = {0};
@@ -50,7 +50,7 @@ Statement local_statement_parse(Parser *p) {
 
             SAFE_MALLOC(VariableDeclaration, variableDeclaration)
             variableDeclaration->initializer = NULL;
-            variableDeclaration->symbol = symbol_from_token(&symbol);
+            variableDeclaration->symbol = symbol;
 
             statement.position = symbol.position;
             statement.type = STATEMENT_VARIABLE_DECLARATION;
@@ -74,7 +74,7 @@ Statement local_statement_parse(Parser *p) {
 
         SAFE_MALLOC(VariableDeclaration, variableDeclaration)
         variableDeclaration->initializer = initializer;
-        variableDeclaration->symbol = symbol_from_token(&symbol);
+        variableDeclaration->symbol = symbol;
 
         statement.position = position_from_to(&symbol.position, &initializer->position);
         statement.type = STATEMENT_VARIABLE_DECLARATION;
@@ -194,11 +194,11 @@ bool is_end_of_for_body(Token *token) {
     return token_is_keyword("end", token);
 }
 
-Statement for_generic_statement_parse(Parser *p, Token *_for, Symbol *symbol, Position *lastPos) {
-    SAFE_MALLOC(SymbolNode, symbolsHead)
+Statement for_generic_statement_parse(Parser *p, Token *_for, Token symbol, Position *lastPos) {
+    SAFE_MALLOC(TokenNode, symbolsHead)
     symbolsHead->value = symbol;
 
-    SymbolNode *symbolsCurrent = symbolsHead;
+    TokenNode *symbolsCurrent = symbolsHead;
     while (p->cur_token.type == TOKEN_COMMA) {
         Token comma = p->cur_token;
         parser_consume(p);
@@ -210,18 +210,18 @@ Statement for_generic_statement_parse(Parser *p, Token *_for, Symbol *symbol, Po
             continue;
         }
 
-        Symbol *symbolValue = symbol_from_token(&p->cur_token);
+        Token symbolValue = p->cur_token;
         parser_consume(p);
 
-        SAFE_MALLOC(SymbolNode, node)
+        SAFE_MALLOC(TokenNode, node)
 
-        node->value = symbolValue;
         node->next = NULL;
+        node->value = symbolValue;
 
         symbolsCurrent->next = node;
         symbolsCurrent = node;
     }
-    lastPos = &symbolsCurrent->value->position;
+    lastPos = &symbolsCurrent->value.position;
 
     if (!token_is_keyword("in", &p->cur_token)) {
         const char *message = "missing \"in\" keyword for generic for loop";
@@ -280,14 +280,13 @@ Statement for_generic_statement_parse(Parser *p, Token *_for, Symbol *symbol, Po
 
 Statement for_statement_parse(Parser *p, Token *_for) {
     Position *lastPos = {0};
-    Token symbolToken = p->cur_token;
-    Symbol *symbol;
-    if (symbolToken.type != TOKEN_SYMBOL) {
+    Token symbol;
+    if (p->cur_token.type != TOKEN_SYMBOL) {
         const char *message = "missing symbol for iterator";
         output_miss_symbol(p, &_for->position, message, strlen(message));
     } else {
-        lastPos = &symbolToken.position;
-        symbol = symbol_from_token(&symbolToken);
+        symbol = p->cur_token;
+        lastPos = &symbol.position;
         parser_consume(p);
     }
 
@@ -395,14 +394,14 @@ Statement statement_parse(Parser *p) {
     if (token.type == TOKEN_SYMBOL) {
         Expression index;
         {
-            Symbol *symbol = symbol_from_token(&p->cur_token);
+            Token symbol = p->cur_token;
             parser_consume(p);
 
             SAFE_MALLOC(VariableExpression, variableExpression)
             variableExpression->symbol = symbol;
 
             index.type = EXPRESSION_VARIABLE;
-            index.position = symbol->position;
+            index.position = symbol.position;
             index.value = variableExpression;
         }
 
@@ -412,14 +411,14 @@ Statement statement_parse(Parser *p) {
                 parser_consume(p);
                 Position *lastPos = &dot.position;
 
-                Symbol *symbol = NULL;
+                Token symbol;
                 if (p->cur_token.type != TOKEN_SYMBOL) {
                     const char *message = "missing function name index after \".\"";
                     output_miss_symbol(p, &dot.position, message, strlen(message));
                 } else {
-                    symbol = symbol_from_token(&p->cur_token);
+                    symbol = p->cur_token;
                     parser_consume(p);
-                    lastPos = &symbol->position;
+                    lastPos = &symbol.position;
                 }
 
                 Expression valueExpression;
@@ -488,13 +487,13 @@ Statement statement_parse(Parser *p) {
         parser_consume(p);
         Position *lastPos = &token.position;
 
-        Symbol *symbol = NULL;
+        SAFE_MALLOC(Token, symbol)
         if (p->cur_token.type != TOKEN_SYMBOL) {
             const char *message = "missing symbol after goto point operator";
             output_miss_symbol(p, &token.position, message, strlen(message));
         } else {
-            lastPos = &p->cur_token.position;
-            symbol = symbol_from_token(&p->cur_token);
+            memcpy(symbol, &p->cur_token, sizeof(Token));
+            lastPos = &symbol->position;
             parser_consume(p);
         }
 
@@ -538,12 +537,12 @@ Statement statement_parse(Parser *p) {
 
         Expression index;
         {
-            Symbol *symbol = NULL;
+            Token symbol = {0};
             if (p->cur_token.type != TOKEN_SYMBOL) {
                 const char *message = "missing function name";
                 output_miss_symbol(p, &token.position, message, strlen(message));
             } else {
-                symbol = symbol_from_token(&p->cur_token);
+                symbol = p->cur_token;
                 parser_consume(p);
             }
 
@@ -553,10 +552,10 @@ Statement statement_parse(Parser *p) {
             index.type = EXPRESSION_VARIABLE;
             index.value = variableExpression;
 
-            if (symbol == NULL) {
-                index.position = (Position) {0};
+            if (symbol.position.start_column == 0) {
+                index.position = (Position){0};
             } else {
-                index.position = symbol->position;
+                index.position = symbol.position;
             }
         }
 
@@ -566,14 +565,14 @@ Statement statement_parse(Parser *p) {
                 parser_consume(p);
                 Position *lastPos = &dot.position;
 
-                Symbol *symbol = NULL;
+                Token symbol = {0};
                 if (p->cur_token.type != TOKEN_SYMBOL) {
                     const char *message = "missing function name index after \".\"";
                     output_miss_symbol(p, &dot.position, message, strlen(message));
                 } else {
-                    symbol = symbol_from_token(&p->cur_token);
+                    symbol = p->cur_token;
+                    lastPos = &symbol.position;
                     parser_consume(p);
-                    lastPos = &symbol->position;
                 }
 
                 Expression valueExpression;
@@ -595,14 +594,14 @@ Statement statement_parse(Parser *p) {
                 parser_consume(p);
                 Position *lastPos = &colon.position;
 
-                Symbol *symbol = NULL;
+                Token symbol = {0};
                 if (p->cur_token.type != TOKEN_SYMBOL) {
                     const char *message = "missing function name index after \":\"";
                     output_miss_symbol(p, &colon.position, message, strlen(message));
                 } else {
-                    symbol = symbol_from_token(&p->cur_token);
+                    symbol = p->cur_token;
                     parser_consume(p);
-                    lastPos = &symbol->position;
+                    lastPos = &symbol.position;
                 }
 
                 Expression valueExpression;
@@ -798,12 +797,12 @@ Statement statement_parse(Parser *p) {
         parser_consume(p);
         Position *lastPos = &token.position;
 
-        Symbol *symbol = NULL;
+        SAFE_MALLOC(Token, symbol)
         if (p->cur_token.type != TOKEN_SYMBOL) {
             const char *message = "missing symbol after \"goto\" symbol";
             output_miss_symbol(p, lastPos, message, strlen(message));
         } else {
-            symbol = symbol_from_token(&p->cur_token);
+            memcpy(symbol, &p->cur_token, sizeof(Token));
             lastPos = &symbol->position;
             parser_consume(p);
         }
@@ -896,9 +895,6 @@ void statement_destroy(Statement *statement) {
             if (variableDeclaration->initializer != NULL) {
                 expression_destroy(variableDeclaration->initializer);
                 free(variableDeclaration->initializer);
-            }
-            if (variableDeclaration->symbol != NULL) {
-                free(variableDeclaration->symbol);
             }
             
             free(variableDeclaration);
@@ -1036,8 +1032,7 @@ void statement_destroy(Statement *statement) {
             expression_destroy(&forNumericLoopStatement->initializer);
             expression_destroy(&forNumericLoopStatement->condition);
             expression_destroy(&forNumericLoopStatement->increment);
-
-            free(forNumericLoopStatement->symbol);
+            
             free(forNumericLoopStatement);
 
             break;
@@ -1057,10 +1052,9 @@ void statement_destroy(Statement *statement) {
             }
 
             if (forGenericLoopStatement->symbols != NULL) {
-                SymbolNode *node = forGenericLoopStatement->symbols;
+                TokenNode *node = forGenericLoopStatement->symbols;
                 while (node != NULL) {
-                    { free(node->value); };
-                    SymbolNode *nextNode = node->next;
+                    TokenNode *nextNode = node->next;
                     free(node);
                     node = nextNode;
                 }

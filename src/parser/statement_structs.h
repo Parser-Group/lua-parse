@@ -5,7 +5,6 @@
 #include "expressions.h"
 #include "expression_structs.h"
 #include "statement_struct.h"
-#include "symbol.h"
 
 typedef struct {
     StatementNode *statements;
@@ -16,7 +15,7 @@ typedef struct {
 } LocalStatement;
 
 typedef struct {
-    Symbol *symbol;
+    Token symbol;
     Expression *initializer;
 } VariableDeclaration;
 
@@ -61,7 +60,7 @@ typedef struct {
 } IfStatement;
 
 typedef struct {
-    Symbol *symbol;
+    Token symbol;
     Expression initializer;
     Expression condition;
     Expression increment;
@@ -69,7 +68,7 @@ typedef struct {
 } ForNumericLoopStatement;
 
 typedef struct {
-    SymbolNode *symbols;
+    TokenNode *symbols;
     Expression get_iterator;
     StatementNode *statements;
 } ForGenericLoopStatement;
