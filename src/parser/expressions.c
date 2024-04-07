@@ -19,7 +19,7 @@ FunctionParameter *function_parameter_parse(Parser *p) {
 
     SAFE_MALLOC(FunctionParameter, parameter)
     parameter->position = p->cur_token.position;
-    parameter->name = symbol_from_token(&p->cur_token);
+    parameter->name = p->cur_token;
     return parameter;
 }
 
@@ -136,10 +136,10 @@ Expression expression_table_parse(Parser *p, Token *openBrace) {
     TableInitializerExpressionNode *initializerExpressionsCurrent = initializerExpressionsHead;
     while (true) {
         if (p->cur_token.type == TOKEN_SYMBOL) {
-            Symbol *symbol = symbol_from_token(&p->cur_token);
+            Token symbol = p->cur_token;
             parser_consume(p);
 
-            Position *lastPos = &symbol->position;
+            Position *lastPos = &symbol.position;
             if (p->cur_token.type != TOKEN_EQUAL) {
                 const char *message = "missing \"=\" (equal) sign after symbol";
                 output_miss_equal(p, lastPos, message, strlen(message));
@@ -159,7 +159,7 @@ Expression expression_table_parse(Parser *p, Token *openBrace) {
             SAFE_MALLOC(TableNamedInitializerExpression, tableNamedInitializerExpression)
             tableNamedInitializerExpression->symbol = symbol;
             tableNamedInitializerExpression->initializer = initializer;
-            tableNamedInitializerExpression->position = position_from_to(&symbol->position, &initializer.position);
+            tableNamedInitializerExpression->position = position_from_to(&symbol.position, &initializer.position);
 
             node->type = TABLE_INITIALIZER_NAMED;
             node->value = tableNamedInitializerExpression;
@@ -385,7 +385,7 @@ Expression internal_expression_parse(Parser *p) {
         Expression exp;
 
         SAFE_MALLOC(VariableExpression, varExp)
-        varExp->symbol = symbol_from_token(&token);
+        varExp->symbol = token;
 
         exp.type = EXPRESSION_VARIABLE;
         exp.position = token.position;
@@ -524,7 +524,7 @@ Expression internal_expression_parse(Parser *p) {
 }
 
 Expression expression_chain_parse(Parser *p, Expression first) {
-    Expression exp = {0};
+    Expression exp;
 
     exp = binary_expression_parse(p, first);
     if (exp.type != EXPRESSION_NONE) {
@@ -565,7 +565,7 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         if (p->cur_token.type == TOKEN_SYMBOL) {
             SAFE_MALLOC(VariableNameIndexExpression, varExp)
             varExp->first = first;
-            varExp->index = symbol_from_token(&p->cur_token);
+            varExp->index = p->cur_token;
 
             exp.type = EXPRESSION_VARIABLE_NAME_INDEX;
             exp.position = position_from_to(&first.position, &p->cur_token.position);
@@ -586,7 +586,7 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         if (p->cur_token.type == TOKEN_SYMBOL) {
             SAFE_MALLOC(VariableNameIndexWithSelfExpression, varExp)
             varExp->first = first;
-            varExp->index = symbol_from_token(&p->cur_token);
+            varExp->index = p->cur_token;
 
             exp.type = EXPRESSION_VARIABLE_NAME_INDEX_WITH_SELF;
             exp.position = position_from_to(&first.position, &p->cur_token.position);
@@ -762,7 +762,6 @@ void expression_destroy(Expression *expression) {
 
         case EXPRESSION_VARIABLE: {
             VariableExpression *variableExpression = expression->value;
-            free(variableExpression->symbol);
             free(variableExpression);
 
             break;
@@ -771,9 +770,6 @@ void expression_destroy(Expression *expression) {
             VariableNameIndexExpression *variableNameIndexExpression = expression->value;
             
             expression_destroy(&variableNameIndexExpression->first);
-            if (variableNameIndexExpression->index != NULL) {
-                free(variableNameIndexExpression->index);
-            }
 
             free(variableNameIndexExpression);
 
@@ -794,8 +790,7 @@ void expression_destroy(Expression *expression) {
             VariableNameIndexWithSelfExpression *variableNameIndexWithSelfExpression = expression->value;
 
             expression_destroy(&variableNameIndexWithSelfExpression->first);
-            free(variableNameIndexWithSelfExpression->index);
-            
+
             free(variableNameIndexWithSelfExpression);
 
             break;
@@ -809,7 +804,6 @@ void expression_destroy(Expression *expression) {
                 while (node != NULL) {
                     {
                         FunctionParameter *functionParameter = node->value;
-                        free(functionParameter->name);
                         free(functionParameter);
                     };
                     FunctionParameterNode *nextNode = node->next;
@@ -871,7 +865,6 @@ void expression_destroy(Expression *expression) {
                             TableNamedInitializerExpression *tableNamedInitializerExpression = node->value;
                             
                             expression_destroy(&tableNamedInitializerExpression->initializer);
-                            free(tableNamedInitializerExpression->symbol);
                             
                             free(tableNamedInitializerExpression);
                             
@@ -910,7 +903,6 @@ void expression_destroy(Expression *expression) {
 
         default:
             UNIMPLEMENTED("expression_destroy")
-            break;
     }
 
     //NOTE: could be removed since it is not needed
