@@ -19,7 +19,7 @@ FunctionParameter *function_parameter_parse(Parser *p) {
 
     SAFE_MALLOC(FunctionParameter, parameter)
     parameter->position = p->cur_token.position;
-    parameter->name = symbol_from_token(&p->cur_token);
+    parameter->name = p->cur_token;
     return parameter;
 }
 
@@ -136,10 +136,10 @@ Expression expression_table_parse(Parser *p, Token *openBrace) {
     TableInitializerExpressionNode *initializerExpressionsCurrent = initializerExpressionsHead;
     while (true) {
         if (p->cur_token.type == TOKEN_SYMBOL) {
-            Symbol *symbol = symbol_from_token(&p->cur_token);
+            Token symbol = p->cur_token;
             parser_consume(p);
 
-            Position *lastPos = &symbol->position;
+            Position *lastPos = &symbol.position;
             if (p->cur_token.type != TOKEN_EQUAL) {
                 const char *message = "missing \"=\" (equal) sign after symbol";
                 output_miss_equal(p, lastPos, message, strlen(message));
@@ -159,7 +159,7 @@ Expression expression_table_parse(Parser *p, Token *openBrace) {
             SAFE_MALLOC(TableNamedInitializerExpression, tableNamedInitializerExpression)
             tableNamedInitializerExpression->symbol = symbol;
             tableNamedInitializerExpression->initializer = initializer;
-            tableNamedInitializerExpression->position = position_from_to(&symbol->position, &initializer.position);
+            tableNamedInitializerExpression->position = position_from_to(&symbol.position, &initializer.position);
 
             node->type = TABLE_INITIALIZER_NAMED;
             node->value = tableNamedInitializerExpression;
@@ -207,14 +207,14 @@ Expression expression_table_parse(Parser *p, Token *openBrace) {
 
             SAFE_MALLOC(TableInitializerExpressionNode, node)
 
-            TableIndexInitializerExpression expression;
+            SAFE_MALLOC(TableIndexInitializerExpression, expression)
 
-            expression.index = index;
-            expression.initializer = initializer;
-            expression.position = position_from_to(&openBracket.position, &initializer.position);
+            expression->index = index;
+            expression->initializer = initializer;
+            expression->position = position_from_to(&openBracket.position, &initializer.position);
 
             node->type = TABLE_INITIALIZER_INDEX;
-            node->value = &expression;
+            node->value = expression;
             node->next = NULL;
 
             initializerExpressionsCurrent->next = node;
@@ -309,15 +309,15 @@ Expression binary_expression_parse(Parser *p, Expression left) {
 
     Expression right = expression_parse(p);
 
-    Expression exp;
-    exp.type = EXPRESSION_BINARY;
-    exp.position = position_from_to(&left.position, &right.position);
 
     SAFE_MALLOC(BinaryExpression, binaryExp)
     binaryExp->type = (BinaryExpressionType) p->cur_token.type + addToType;
     binaryExp->left = left;
     binaryExp->right = right;
 
+    Expression exp;
+    exp.type = EXPRESSION_BINARY;
+    exp.position = position_from_to(&left.position, &right.position);
     exp.value = binaryExp;
     return exp;
 }
@@ -385,7 +385,7 @@ Expression internal_expression_parse(Parser *p) {
         Expression exp;
 
         SAFE_MALLOC(VariableExpression, varExp)
-        varExp->symbol = symbol_from_token(&token);
+        varExp->symbol = token;
 
         exp.type = EXPRESSION_VARIABLE;
         exp.position = token.position;
@@ -524,7 +524,7 @@ Expression internal_expression_parse(Parser *p) {
 }
 
 Expression expression_chain_parse(Parser *p, Expression first) {
-    Expression exp = {0};
+    Expression exp;
 
     exp = binary_expression_parse(p, first);
     if (exp.type != EXPRESSION_NONE) {
@@ -565,7 +565,7 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         if (p->cur_token.type == TOKEN_SYMBOL) {
             SAFE_MALLOC(VariableNameIndexExpression, varExp)
             varExp->first = first;
-            varExp->index = symbol_from_token(&p->cur_token);
+            varExp->index = p->cur_token;
 
             exp.type = EXPRESSION_VARIABLE_NAME_INDEX;
             exp.position = position_from_to(&first.position, &p->cur_token.position);
@@ -586,7 +586,7 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         if (p->cur_token.type == TOKEN_SYMBOL) {
             SAFE_MALLOC(VariableNameIndexWithSelfExpression, varExp)
             varExp->first = first;
-            varExp->index = symbol_from_token(&p->cur_token);
+            varExp->index = p->cur_token;
 
             exp.type = EXPRESSION_VARIABLE_NAME_INDEX_WITH_SELF;
             exp.position = position_from_to(&first.position, &p->cur_token.position);
@@ -604,20 +604,23 @@ Expression expression_chain_parse(Parser *p, Expression first) {
     if (token.type == TOKEN_OPEN_PAREN) {
         parser_consume(p);
 
-        SAFE_MALLOC(ExpressionNode, expressionHead)
-        expressionHead->value = NULL;
-        ExpressionNode *expressionCurrent = expressionHead;
+        SAFE_MALLOC(ExpressionNode, argumentsExpressionHead)
+        argumentsExpressionHead->next = NULL;
+        argumentsExpressionHead->value = NULL;
+        ExpressionNode *argumentsExpressionCurrent = argumentsExpressionHead;
         Position *lastPos = NULL;
         while (true) {
             Expression expValue = expression_parse(p);
             if (expValue.type != EXPRESSION_NONE) {
+                SAFE_MALLOC(Expression, expValueHeap)
+                memcpy(expValueHeap, &expValue, sizeof(Expression));
+                
                 SAFE_MALLOC(ExpressionNode, node)
-
-                node->value = &expValue;
+                node->value = expValueHeap;
                 node->next = NULL;
 
-                expressionCurrent->next = node;
-                expressionCurrent = node;
+                argumentsExpressionCurrent->next = node;
+                argumentsExpressionCurrent = node;
             } else if (lastPos != NULL && lastPos->start_line != 0) {
                 const char *message = "missing expression as function argument";
                 output_miss_expression(p, lastPos, message, strlen(message));
@@ -642,8 +645,8 @@ Expression expression_chain_parse(Parser *p, Expression first) {
         Expression expression;
 
         SAFE_MALLOC(FunctionCallExpression, functionCallExpression)
-        functionCallExpression->arguments = expressionHead->next;
-        free(expressionHead);
+        functionCallExpression->arguments = argumentsExpressionHead->next;
+        free(argumentsExpressionHead);
         functionCallExpression->index = first;
 
         expression.type = EXPRESSION_FUNCTION_CALL;
@@ -673,83 +676,134 @@ Expression expression_parse(Parser *p) {
 void expression_destroy(Expression *expression) {
     switch (expression->type) {
         case EXPRESSION_NONE:
-
         case EXPRESSION_LITERAL_NIL:
-
             break;
 
         case EXPRESSION_PRIORITY:
+        {
+            PriorityExpression *priorityExpression = expression->value;
+
+            expression_destroy(&priorityExpression->value);
+            
+            free(priorityExpression);
+            
+            break;    
+        }
+        
         case EXPRESSION_NOT:
+        {
+            NotExpression *notExpression = expression->value;
+
+            expression_destroy(&notExpression->value);
+            
+            free(notExpression);
+            
+            break;
+        }
+            
         case EXPRESSION_BIT_NOT:
+        {
+            BitNotExpression *bitNotExpression = expression->value;
+
+            expression_destroy(&bitNotExpression->value);
+            
+            free(bitNotExpression);
+
+            break;
+        }
+            
         case EXPRESSION_COUNT:
+        {
+            CountExpression *countExpression = expression->value;
+            
+            expression_destroy(&countExpression->expression);
+
+            free(countExpression);
+            
+            break;
+        }
 
         case EXPRESSION_LITERAL_BOOLEAN:
+        {
+            LiteralBooleanExpression *literalBooleanExpression = expression->value;
+            
+            free(literalBooleanExpression);
+            
+            break;    
+        }
         case EXPRESSION_LITERAL_NUMBER:
+        {
+            LiteralNumberExpression *literalNumberExpression = expression->value;
+
+            free(literalNumberExpression);
+            
+            break;    
+        }
         case EXPRESSION_LITERAL_STRING:
+        {
+            LiteralStringExpression *literalStringExpression = expression->value;
 
-        case EXPRESSION_VARIABLE_INDEX:
-
-        case EXPRESSION_BINARY:
-
-            free(expression->value);
+            free(literalStringExpression);
+            
             break;
+        }
+            
+        case EXPRESSION_BINARY:
+        {
+            BinaryExpression *binaryExpression = expression->value;
+
+            expression_destroy(&binaryExpression->left);
+            expression_destroy(&binaryExpression->right);
+            
+            free(binaryExpression);
+            
+            break;
+        }
 
         case EXPRESSION_VARIABLE: {
             VariableExpression *variableExpression = expression->value;
-            free(variableExpression->symbol);
             free(variableExpression);
 
             break;
         }
         case EXPRESSION_VARIABLE_NAME_INDEX: {
             VariableNameIndexExpression *variableNameIndexExpression = expression->value;
-
-            expression_destroy(&variableNameIndexExpression->first);
-            if (variableNameIndexExpression->index != NULL) {
-                free(variableNameIndexExpression->index);
-            }
             
+            expression_destroy(&variableNameIndexExpression->first);
+
             free(variableNameIndexExpression);
 
+            break;
+        }
+        case EXPRESSION_VARIABLE_INDEX:
+        {
+            VariableIndexExpression *variableIndexExpression = expression->value;
+
+            expression_destroy(&variableIndexExpression->first);
+            expression_destroy(&variableIndexExpression->index);
+            
+            free(variableIndexExpression);
+            
             break;
         }
         case EXPRESSION_VARIABLE_NAME_INDEX_WITH_SELF: {
             VariableNameIndexWithSelfExpression *variableNameIndexWithSelfExpression = expression->value;
 
             expression_destroy(&variableNameIndexWithSelfExpression->first);
-            free(variableNameIndexWithSelfExpression->index);
-            
+
             free(variableNameIndexWithSelfExpression);
 
             break;
         }
-
-        case EXPRESSION_FUNCTION_CALL: {
-            FunctionCallExpression *functionCallExpression = expression->value;
-
-            if (functionCallExpression->arguments != NULL) {
-                ExpressionNode *node = functionCallExpression->arguments;
-                while (node != NULL) {
-                    { expression_destroy(node->value); };
-                    ExpressionNode *nextNode = node->next;
-                    free(node);
-                    node = nextNode;
-                }
-            }
-
-            free(functionCallExpression);
-
-            break;
-        }
+        
         case EXPRESSION_FUNCTION: {
             FunctionExpression *functionExpression = expression->value;
-
+            
             if (functionExpression->parameters != NULL) {
                 FunctionParameterNode *node = functionExpression->parameters;
                 while (node != NULL) {
                     {
                         FunctionParameter *functionParameter = node->value;
-                        free(functionParameter->name);
                         free(functionParameter);
                     };
                     FunctionParameterNode *nextNode = node->next;
@@ -761,7 +815,9 @@ void expression_destroy(Expression *expression) {
             if (functionExpression->statements != NULL) {
                 StatementNode *node = functionExpression->statements;
                 while (node != NULL) {
-                    { statement_destroy(&node->value); };
+                    {
+                        statement_destroy(&node->value);
+                    };
                     StatementNode *nextNode = node->next;
                     free(node);
                     node = nextNode;
@@ -772,6 +828,28 @@ void expression_destroy(Expression *expression) {
 
             break;
         }
+        case EXPRESSION_FUNCTION_CALL: {
+            FunctionCallExpression *functionCallExpression = expression->value;
+
+            expression_destroy(&functionCallExpression->index);
+            if (functionCallExpression->arguments != NULL) {
+                ExpressionNode *node = functionCallExpression->arguments;
+                while (node != NULL) {
+                    {
+                        expression_destroy(node->value);
+                        free(node->value);
+                    };
+                    ExpressionNode *nextNode = node->next;
+                    free(node);
+                    node = nextNode;
+                }
+            }
+
+            free(functionCallExpression);
+
+            break;
+        }
+        
         case EXPRESSION_TABLE: {
             TableExpression *tableExpression = expression->value;
 
@@ -785,9 +863,8 @@ void expression_destroy(Expression *expression) {
                         case TABLE_INITIALIZER_NAMED:
                         {
                             TableNamedInitializerExpression *tableNamedInitializerExpression = node->value;
-
+                            
                             expression_destroy(&tableNamedInitializerExpression->initializer);
-                            free(tableNamedInitializerExpression->symbol);
                             
                             free(tableNamedInitializerExpression);
                             
@@ -795,10 +872,23 @@ void expression_destroy(Expression *expression) {
                         }
                         
                         case TABLE_INITIALIZER_INDEX:
-                        case TABLE_INITIALIZER_EXPRESSION:
+                        {
+                            TableIndexInitializerExpression *tableIndexInitializerExpression = node->value;
                             
+                            expression_destroy(&tableIndexInitializerExpression->index);
+                            expression_destroy(&tableIndexInitializerExpression->initializer);
+
+                            free(tableIndexInitializerExpression);
+                            
+                            break;
+                        }
+                            
+                        case TABLE_INITIALIZER_EXPRESSION:
+                        {
+                            expression_destroy(node->value);
                             free(node->value);
                             break;
+                        }
                     }
                 };
                 TableInitializerExpressionNode *nextNode = node->next;
@@ -812,7 +902,7 @@ void expression_destroy(Expression *expression) {
         }
 
         default:
-        UNIMPLEMENTED("expression_destroy")
+            UNIMPLEMENTED("expression_destroy")
     }
 
     //NOTE: could be removed since it is not needed
