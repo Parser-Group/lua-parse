@@ -6,16 +6,16 @@
 #include <time.h>
 
 void printOutput(Position *pos, OutputCode code, const char *message, size_t message_len) {
-    char *positionStr = position_to_string(pos);
-    printf("%s -> %s: %.*s\n", positionStr, outputCode_to_string(code), (int)message_len, message);
-    free(positionStr);
+//    char *positionStr = position_to_string(pos);
+//    printf("%s -> %s: %.*s\n", positionStr, outputCode_to_string(code), (int)message_len, message);
+//    free(positionStr);
 }
 
 int main() {
     char *content;
     size_t content_len;
     { // load from file
-//        FILE *file = fopen("./../Test.lua", "rb"); // bigger file size: 500KB
+//        FILE *file = fopen("./../Test.lua", "rb");
         
 #if linux
         FILE *file = fopen("/mnt/c/Coding/C#/Lua/FINLuaDocumentationSumneko.lua", "rb"); // bigger file size: 500KB
@@ -31,7 +31,7 @@ int main() {
         fseek(file, 0, SEEK_END);
         long file_size = ftell(file);
         rewind(file);
-
+        
         content_len = file_size + 1;
         content = (char *) malloc(content_len);
         if (content == NULL) {
@@ -44,20 +44,12 @@ int main() {
         content[file_size] = '\0';
         fclose(file);
     }
-
-//    {
-//        content = "local test = true\n"
-//                "function test(message)\n"
-//                "    print(message)\n"
-//                "end\n"
-//                "test(123)\n";
-//        content_len = strlen(content);
-//    }
-
+    
+    struct timespec start_time, end_time;
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+    
     Lexer l = lexer_new(content, content_len);
     Parser p = parser_new(&l, printOutput);
-    
-    int start = (int)clock();
     
     Statement statement = parser_next(&p);
     while (statement.type != STATEMENT_END) {
@@ -71,10 +63,10 @@ int main() {
         statement_destroy(&statement);
         statement = parser_next(&p);
     }
-
-    int end = (int)clock();
-
-    printf("took %dms", end - start);
+    
+    clock_gettime(CLOCK_MONOTONIC, &end_time);
+    double time_diff_mqs = (double)(end_time.tv_nsec - start_time.tv_nsec) / 1000;
+    printf("took %f ms", (time_diff_mqs / 1000));
 
     free(content);
     return 0;
