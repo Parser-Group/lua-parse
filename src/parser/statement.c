@@ -413,7 +413,7 @@ Statement statement_parse(Parser *p) {
 
                 Token symbol;
                 if (p->cur_token.type != TOKEN_SYMBOL) {
-                    const char *message = "missing function name index after \".\"";
+                    const char *message = "missing symbol index after \".\"";
                     output_miss_symbol(p, &dot.position, message, strlen(message));
                 } else {
                     symbol = p->cur_token;
